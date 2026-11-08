@@ -132,8 +132,18 @@ public class GameActivity extends Activity {
                         android.widget.FrameLayout.LayoutParams.MATCH_PARENT));
             }
             if (label != null) {
-                label.setText(buildLabelText());
-                Log.i(TAG, "Build label: " + buildLabelText());
+                final android.widget.TextView buildLabel = label;
+                buildLabel.setText(buildLabelText());
+                // The scene is built on the GL thread, so refresh the label once
+                // rendering has had a chance to start.
+                buildLabel.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        String text = buildLabelText();
+                        buildLabel.setText(text);
+                        Log.i(TAG, "Build label: " + text);
+                    }
+                }, 1500);
             }
 
             Log.i(TAG, "OpenGL initialized");
@@ -350,8 +360,12 @@ public class GameActivity extends Activity {
         } catch (Throwable t) {
             version = "unknown";
         }
-        String scene = renderManager != null && renderManager.getRenderer() != null
-            && renderManager.getRenderer().isSceneReady() ? "scene live" : "scene starting";
+        boolean live = renderManager != null && renderManager.getRenderer() != null
+            && renderManager.getRenderer().isSceneReady();
+        String scene = live ? "scene live" : "scene starting";
+        if (live && gameRunning) {
+            scene = "rendering";
+        }
         return "Both Engine " + version + " \u00b7 " + scene;
     }
 
