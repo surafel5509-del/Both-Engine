@@ -1,7 +1,7 @@
 package com.bothengine.animation;
 
 import com.bothengine.rendering.Vector3;
-import com.bothengine.rendering.Quaternion;
+import com.bothengine.components.Quaternion;
 
 import java.util.ArrayList;
 import java.util.HashMap;

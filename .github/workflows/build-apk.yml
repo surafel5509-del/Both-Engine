@@ -1,0 +1,315 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main, master, arena/0161a3aa-both-engine]
+    tags: ['v*']
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      build_release:
+        description: 'Also build a release APK'
+        type: boolean
+        default: false
+      publish_release:
+        description: 'Attach the APK(s) to a GitHub Release'
+        type: boolean
+        default: false
+
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  issues: write
+
+env:
+  # Android SDK components the app needs.
+  COMPILE_SDK: '34'
+  BUILD_TOOLS: '34.0.0'
+
+jobs:
+  build:
+    name: Build Both Engine APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Point Gradle at the runner's Android SDK
+        shell: bash
+        run: |
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/Android/Sdk}}"
+          echo "sdk.dir=$SDK_ROOT" > local.properties
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "Using Android SDK at $SDK_ROOT"
+
+      - name: Ensure required Android SDK packages
+        shell: bash
+        run: |
+          SDKMANAGER="$(ls -d "${ANDROID_SDK_ROOT}"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -n1 || true)"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager not found - relying on the runner image"
+            exit 0
+          fi
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-${COMPILE_SDK}" \
+            "build-tools;${BUILD_TOOLS}" > /dev/null 2>&1 || \
+            echo "::warning::Some SDK packages could not be installed; continuing"
+
+      - name: Resolve version info
+        id: version
+        shell: bash
+        run: |
+          echo "code=${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "name=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Build debug APK
+        id: build
+        shell: bash
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          chmod +x gradlew
+          set +e
+          ./gradlew --no-daemon --stacktrace assembleDebug > build.log 2>&1
+          status=$?
+          set -e
+
+          # Surface compiler diagnostics in a form that can be fetched through
+          # the GitHub API (the raw job log stream is not always reachable).
+          {
+            echo "### Diagnostic report"
+            echo '```'
+            grep -E "^(e: |.*error:|.*warning: .*(deprecat|unchecked))" build.log | head -n 400 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ $status -ne 0 ]; then
+            echo "::error::assembleDebug failed (exit $status)"
+            grep -E "error:" build.log | head -n 300 || tail -n 120 build.log
+            exit $status
+          fi
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Publish diagnostics on failure
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -f build.log ] || exit 0
+          {
+            echo "Automated diagnostics from workflow run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+            echo ""
+            echo '```'
+            grep -E "error:|FAILURE:|What went wrong|Caused by" build.log | head -n 400 || tail -n 200 build.log
+            echo '```'
+          } > diagnostic-comment.md
+
+          # One rolling diagnostics issue, keyed by a ref so it stays reusable.
+          MARKER="<!-- bothengine-diagnostics:${GITHUB_REF_NAME} -->"
+          EXISTING="$(gh api --paginate "repos/${{ github.repository }}/issues?state=all&per_page=100" \
+            --jq ".[] | select(.body != null and (.body | contains(\"$MARKER\"))) | .number" 2>/dev/null | head -n1 || true)"
+
+          if [ -n "$EXISTING" ]; then
+            gh api -X POST "repos/${{ github.repository }}/issues/$EXISTING/comments" \
+              -f body="$(cat diagnostic-comment.md)" > /dev/null && echo "Diagnostics added to #$EXISTING"
+          else
+            {
+              echo "$MARKER"
+              echo ""
+              echo "## Both Engine build diagnostics"
+              echo ""
+              echo "Compiler/runtime failures reported by the APK workflow."
+              echo ""
+              cat diagnostic-comment.md
+            } > diagnostic-issue.md
+            gh issue create --repo "${{ github.repository }}" \
+              --title "Build diagnostics: ${GITHUB_SHA:0:7}" \
+              --body-file diagnostic-issue.md > /dev/null && echo "Diagnostics issue created"
+          fi
+
+      - name: Run unit tests
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: ./gradlew --no-daemon testDebugUnitTest
+
+      - name: Collect debug APK
+        id: apk
+        shell: bash
+        run: |
+          APK="$(find app/build/outputs/apk/debug -name '*.apk' | head -n1)"
+          if [ -z "$APK" ]; then
+            echo "::error::No debug APK was produced"
+            exit 1
+          fi
+          OUT="BothEngine-${{ steps.version.outputs.name }}-debug.apk"
+          cp "$APK" "$OUT"
+          echo "path=$OUT" >> "$GITHUB_OUTPUT"
+          ls -lh "$OUT"
+          sha256sum "$OUT" | tee -a "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Both Engine APK"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Version | ${{ steps.version.outputs.name }} |"
+            echo "| Commit | ${{ steps.version.outputs.sha }} |"
+            echo "| Size | $(du -h "$OUT" | cut -f1) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          BUILD_TOOLS_DIR="$(ls -d "${ANDROID_SDK_ROOT}/build-tools/"* 2>/dev/null | sort -V | tail -n1)"
+          if [ -n "$BUILD_TOOLS_DIR" ] && [ -x "$BUILD_TOOLS_DIR/aapt2" ]; then
+            "$BUILD_TOOLS_DIR/aapt2" dump badging "${{ steps.apk.outputs.path }}" | head -n 8
+          fi
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BothEngine-debug-apk
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload build reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-reports
+          path: |
+            app/build/reports/**
+            app/build/outputs/logs/**
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Decode signing keystore
+        id: keystore
+        if: ${{ github.event_name != 'pull_request' }}
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No signing secrets configured - the release APK will use the debug key."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          {
+            echo "SUPPLY_STORE_FILE=$RUNNER_TEMP/release.keystore"
+            echo "SUPPLY_STORE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "SUPPLY_KEY_ALIAS=$KEY_ALIAS"
+            echo "SUPPLY_KEY_PASSWORD=$KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Build release APK
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.build_release || inputs.publish_release }}
+        shell: bash
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          set +e
+          ./gradlew --no-daemon --stacktrace assembleRelease > release.log 2>&1
+          status=$?
+          set -e
+          if [ $status -ne 0 ]; then
+            echo "::error::assembleRelease failed (exit $status)"
+            grep -E "error:" release.log | head -n 300 || tail -n 120 release.log
+            exit $status
+          fi
+
+      - name: Collect release APK
+        id: release_apk
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.build_release || inputs.publish_release }}
+        shell: bash
+        run: |
+          APK="$(find app/build/outputs/apk/release -name '*.apk' | head -n1)"
+          if [ -z "$APK" ]; then
+            echo "::error::No release APK was produced"
+            exit 1
+          fi
+          if [ "${{ steps.keystore.outputs.signed }}" = "true" ]; then
+            OUT="BothEngine-${{ steps.version.outputs.name }}-release-signed.apk"
+          else
+            OUT="BothEngine-${{ steps.version.outputs.name }}-release-debugkey.apk"
+          fi
+          cp "$APK" "$OUT"
+          echo "path=$OUT" >> "$GITHUB_OUTPUT"
+          ls -lh "$OUT"
+
+      - name: Upload release APK
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.build_release || inputs.publish_release }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: BothEngine-release-apk
+          path: ${{ steps.release_apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.publish_release }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${GITHUB_REF}" != "${GITHUB_REF#refs/tags/}" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="build-${{ steps.version.outputs.sha }}"
+          fi
+
+          {
+            echo "Automated build of **Both Engine**."
+            echo ""
+            echo "- Version: \`${{ steps.version.outputs.name }}\`"
+            echo "- Commit: \`${{ steps.version.outputs.sha }}\`"
+            echo "- Workflow run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo ""
+            echo "Install with \`adb install <file>.apk\`, or sideload on Android 7.0+ with OpenGL ES 2.0."
+          } > notes.md
+
+          ASSETS=("${{ steps.apk.outputs.path }}")
+          if [ -n "${{ steps.release_apk.outputs.path }}" ]; then
+            ASSETS+=("${{ steps.release_apk.outputs.path }}")
+          fi
+
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "${ASSETS[@]}" --clobber
+          else
+            gh release create "$TAG" "${ASSETS[@]}" \
+              --title "Both Engine ${{ steps.version.outputs.name }}" \
+              --notes-file notes.md \
+              --target "$GITHUB_SHA"
+          fi

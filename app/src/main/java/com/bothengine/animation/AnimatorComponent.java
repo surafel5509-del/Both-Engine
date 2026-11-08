@@ -3,7 +3,7 @@ package com.bothengine.animation;
 import com.bothengine.components.TransformComponent;
 import com.bothengine.core.ecs.Component;
 import com.bothengine.rendering.Vector3;
-import com.bothengine.rendering.Quaternion;
+import com.bothengine.components.Quaternion;
 
 import java.util.HashMap;
 import java.util.Map;
