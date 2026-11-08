@@ -85,16 +85,28 @@ jobs:
           VERSION_NAME: ${{ steps.version.outputs.name }}
         run: |
           chmod +x gradlew
-          # Fetch the Gradle distribution up front and retry: downloading it
-          # inside the build made runs fail intermittently on a 10s timeout.
-          for attempt in 1 2 3; do
-            if ./gradlew --version > /dev/null 2>&1; then break; fi
-            echo "Gradle bootstrap attempt $attempt failed, retrying"
-            rm -rf "${HOME}/.gradle/wrapper/dists"/* 2>/dev/null || true
-            sleep 10
-          done
+          # The wrapper distribution url (services.gradle.org -> github.com) is
+          # flaky from some runners. Prefer an already-cached distribution, then
+          # an installed gradle, and finally retry the wrapper download.
+          GRADLE_CMD=""
+          CACHED="$(find "${HOME}/.gradle/wrapper/dists" -mindepth 4 -maxdepth 5 -name 'gradle-8.6' -type d 2>/dev/null | head -n1)"
+          if [ -n "$CACHED" ]; then
+            GRADLE_CMD="$CACHED/bin/gradle"
+          elif command -v gradle >/dev/null 2>&1; then
+            GRADLE_CMD="gradle"
+          else
+            for attempt in 1 2 3 4 5; do
+              if ./gradlew --version > /dev/null 2>&1; then GRADLE_CMD="./gradlew"; break; fi
+              echo "Gradle bootstrap attempt $attempt failed, retrying"
+              rm -rf "${HOME}/.gradle/wrapper/dists"/* 2>/dev/null || true
+              sleep 15
+            done
+          fi
+          echo "Using gradle: ${GRADLE_CMD:-./gradlew}"
+          echo "${GRADLE_CMD:-./gradlew}" > gradle-command.txt
           set +e
-          ./gradlew --no-daemon --stacktrace assembleDebug > build.log 2>&1
+          GCMD="$(cat gradle-command.txt 2>/dev/null || echo ./gradlew)"
+          "$GCMD" --no-daemon --stacktrace assembleDebug > build.log 2>&1
           status=$?
           set -e
 
