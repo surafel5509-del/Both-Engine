@@ -66,6 +66,12 @@ jobs:
             echo "INSTALL_BEGIN" >> smoke.env
             adb install -r -t "$APK" >> smoke.env 2>&1 || true
             echo "INSTALL_END" >> smoke.env
+            # What the APK itself declares as installable entry point.
+            BT="$(ls -d "${ANDROID_SDK_ROOT}/build-tools/"* 2>/dev/null | sort -V | tail -n1 || true)"
+            if [ -n "$BT" ] && [ -x "$BT/aapt2" ]; then
+              "$BT/aapt2" dump badging "$APK" 2>/dev/null | grep -E "^package:|^launchable-activity:" >> smoke.env || true
+            fi
+            adb shell pm list packages | grep bothengine >> smoke.env 2>&1 || true
             adb logcat -c || true
             # Stream from BEFORE the launch: the crash can happen within milliseconds
             # and would otherwise be evicted from the ring buffer.
@@ -128,6 +134,9 @@ jobs:
 
           # Install diagnostics: a failed install also leaves no process behind.
           INSTALL="$(sed -n '/INSTALL_BEGIN/,/INSTALL_END/p' smoke.env)"
+          printf '%s\n' "$INSTALL" | grep -vE "^INSTALL_(BEGIN|END)$" | head -n 8 | while IFS= read -r line; do
+            [ -n "$line" ] && echo "::notice title=Install output::$line"
+          done || true
           if printf '%s' "$INSTALL" | grep -qi "failure"; then
             echo "### Install failed" >> "$GITHUB_STEP_SUMMARY"
             printf '%s\n' "$INSTALL" >> "$GITHUB_STEP_SUMMARY"
