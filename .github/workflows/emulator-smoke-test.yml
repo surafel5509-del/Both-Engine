@@ -8,6 +8,7 @@ on:
     branches: [main, master, arena/0161a3aa-both-engine]
     paths:
       - 'app/**'
+      - 'scripts/**'
       - '.github/workflows/emulator-smoke-test.yml'
 
 concurrency:
