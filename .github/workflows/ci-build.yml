@@ -2,12 +2,13 @@ name: CI Build
 
 on:
   push:
-    branches-ignore: [main, master]
+    branches: [main, master, arena/d50b25a3-both-engine]
+    tags-ignore: ['**']
   pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -15,7 +16,7 @@ concurrency:
 
 jobs:
   assemble:
-    name: Compile and package
+    name: Compile, test and package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,23 +31,49 @@ jobs:
       - name: Point Gradle at the runner's Android SDK
         run: echo "sdk.dir=${ANDROID_SDK_ROOT}" > local.properties
 
-      - name: Assemble debug APK
+      - name: Build
+        id: build
+        shell: bash
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon --stacktrace assembleDebug
+          set +e
+          ./gradlew --no-daemon --stacktrace assembleDebug > build.log 2>&1
+          echo "exit=$?" >> "$GITHUB_OUTPUT"
+          set -e
+          (grep -E 'error:|FAILURE|BUILD SUCCESSFUL|BUILD FAILED' build.log | head -n 40) || true
 
-      - name: Report lint summary
+      - name: Report build result
         if: always()
-        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           {
-            echo "### Build summary"
+            echo "### CI result: exit ${{ steps.build.outputs.exit }}"
             echo ""
-            echo "- Gradle: \`$(./gradlew --version 2>/dev/null | grep '^Gradle' | head -n1)\`"
-            echo "- APK: $(du -h app/build/outputs/apk/debug/*.apk 2>/dev/null | cut -f1)"
-          } >> "$GITHUB_STEP_SUMMARY"
+            echo '```'
+            (grep 'error:' build.log | sed 's#/home/runner/work/Both-Engine/Both-Engine/##' | sort -u | head -n 60) || true
+            (grep -E '^BUILD (SUCCESSFUL|FAILED)' build.log | tail -n 1) || true
+            (grep -E '^\\* What went wrong' -A4 build.log | head -n 20) || true
+            echo '```'
+          } > summary.md
+          cat summary.md >> "$GITHUB_STEP_SUMMARY"
+          python3 - <<'PYEOF'
+          import json, subprocess, os
+          body = open('summary.md', errors='replace').read()
+          payload = {"body": body if len(body) < 60000 else body[:60000] + "\n...(truncated)"}
+          open('/tmp/c.json','w').write(json.dumps(payload))
+          subprocess.run(["gh","api","-X","POST",
+                          f"repos/{os.environ['GITHUB_REPOSITORY']}/commits/{os.environ['GITHUB_SHA']}/comments",
+                          "--input","/tmp/c.json","--jq",".id"], check=False)
+          PYEOF
+
+      - name: Fail when compilation failed
+        if: ${{ steps.build.outputs.exit != '0' }}
+        run: exit 1
 
       - uses: actions/upload-artifact@v4
+        if: ${{ steps.build.outputs.exit == '0' }}
         with:
           name: BothEngine-debug-apk-ci
           path: app/build/outputs/apk/debug/*.apk

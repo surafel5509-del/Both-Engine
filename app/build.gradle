@@ -30,11 +30,11 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // Signed with the CI keystore when SUPPLY_KEYSTORE_* secrets are configured,
-            // otherwise left unsigned and CI falls back to the debug APK.
-            if (System.getenv("SUPPLY_STORE_FILE") != null) {
-                signingConfig signingConfigs.release
-            }
+            // Use the uploaded keystore when the CI secrets are present. Without them
+            // the release build is signed with the debug key so the APK stays installable.
+            signingConfig System.getenv("SUPPLY_STORE_FILE") != null
+                    ? signingConfigs.release
+                    : signingConfigs.debug
         }
     }
 

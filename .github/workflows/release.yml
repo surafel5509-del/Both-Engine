@@ -87,7 +87,7 @@ jobs:
           if [ "${{ steps.keystore.outputs.signed }}" = "true" ]; then
             cp "$REL" "dist/BothEngine-${{ steps.version.outputs.name }}-release-signed.apk"
           else
-            cp "$REL" "dist/BothEngine-${{ steps.version.outputs.name }}-release-unsigned.apk"
+            cp "$REL" "dist/BothEngine-${{ steps.version.outputs.name }}-release-debugkey.apk"
           fi
           cp "$DBG" "dist/BothEngine-${{ steps.version.outputs.name }}-debug.apk"
           sha256sum dist/*.apk | tee -a "$GITHUB_STEP_SUMMARY"

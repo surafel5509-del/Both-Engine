@@ -176,7 +176,7 @@ jobs:
           if [ "${{ steps.keystore.outputs.signed }}" = "true" ]; then
             OUT="BothEngine-${{ steps.version.outputs.name }}-release-signed.apk"
           else
-            OUT="BothEngine-${{ steps.version.outputs.name }}-release-unsigned.apk"
+            OUT="BothEngine-${{ steps.version.outputs.name }}-release-debugkey.apk"
           fi
           cp "$APK" "$OUT"
           echo "path=$OUT" >> "$GITHUB_OUTPUT"
