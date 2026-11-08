@@ -199,7 +199,7 @@ test_apk() {
   summary ""
 
   annotate notice "Smoke test $label" \
-    "PASS: displayed, GL surface created, $frames frames rendered, pid $pid alive"
+    "PASS: displayed, GL surface created, $frames frames, $distinct colours ($bright% non-black), pid $pid alive"
   summary "PASS: displayed, GL surface created, **$frames frames** rendered, " \
     "$distinct colours on screen, pid \`$pid\` alive."
   return 0
