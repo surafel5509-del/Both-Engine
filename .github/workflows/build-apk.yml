@@ -169,6 +169,12 @@ jobs:
           # 3) A DEX payload must exist, i.e. the engine classes made it in.
           unzip -l "$APK" | grep -q "classes.dex" || { echo "::error::APK contains no classes.dex"; exit 1; }
 
+          # Surface the essentials as notices so the run page shows them too.
+          grep -E "^package: name=|^sdkVersion:|^targetSdkVersion:|^launchable-activity: name=" verify.txt | \
+            while IFS= read -r line; do echo "::notice title=APK::$line"; done
+          grep -m1 "Signer #1 certificate DN:" verify.txt | \
+            while IFS= read -r line; do echo "::notice title=APK signing::$line"; done
+
           {
             echo "### APK verification"
             echo '```'
