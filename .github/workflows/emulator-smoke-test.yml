@@ -61,8 +61,21 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
-            APK=$(find app/build/outputs/apk/debug -name '*.apk' | head -n1)
+            # Resolve the APK independently of the action's working directory.
+            APK="$(find "$GITHUB_WORKSPACE/app/build/outputs/apk/debug" -name '*.apk' 2>/dev/null | head -n1)"
+            if [ -z "$APK" ]; then
+              echo "No APK under $GITHUB_WORKSPACE/app/build/outputs; rebuilding" >> smoke.env
+              (cd "$GITHUB_WORKSPACE" && ./gradlew --no-daemon assembleDebug) >> smoke.env 2>&1 || true
+              APK="$(find "$GITHUB_WORKSPACE/app/build/outputs/apk/debug" -name '*.apk' 2>/dev/null | head -n1)"
+            fi
             echo "APK=$APK" > smoke.env
+            echo "PWD=$(pwd)" >> smoke.env
+            if [ -z "$APK" ]; then
+              echo "INSTALL_BEGIN" >> smoke.env
+              echo "failure: no APK produced" >> smoke.env
+              echo "INSTALL_END" >> smoke.env
+              exit 0
+            fi
             echo "INSTALL_BEGIN" >> smoke.env
             adb install -r -t "$APK" >> smoke.env 2>&1 || true
             echo "INSTALL_END" >> smoke.env
