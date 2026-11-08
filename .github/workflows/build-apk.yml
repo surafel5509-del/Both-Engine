@@ -128,9 +128,9 @@ jobs:
             echo "Total compiler errors: $(grep -cE 'error: ' build.log)"
             echo ""
             echo '```'
-            # Keep symbol/location detail lines, which follow each error line.
-            grep -nE "error: |symbol: |location: |required: |found: |reason: |^/home/runner|warning: " build.log \
-              | head -n 3000 | cut -c1-300 || tail -n 300 build.log
+            # Raw compiler output (first error onward) keeps javac's symbol/location
+            # detail intact, which is what the fixes are derived from.
+            sed -n '/error: /,$p' build.log | head -n 1200 | cut -c1-500 || true
             echo '```'
           } > diagnostic-comment.md
 
