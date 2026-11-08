@@ -150,10 +150,31 @@ jobs:
       - name: Verify APK
         shell: bash
         run: |
+          APK="${{ steps.apk.outputs.path }}"
           BUILD_TOOLS_DIR="$(ls -d "${ANDROID_SDK_ROOT}/build-tools/"* 2>/dev/null | sort -V | tail -n1)"
+
+          # 1) Package metadata (name, version, min/target SDK, launcher activity)
           if [ -n "$BUILD_TOOLS_DIR" ] && [ -x "$BUILD_TOOLS_DIR/aapt2" ]; then
-            "$BUILD_TOOLS_DIR/aapt2" dump badging "${{ steps.apk.outputs.path }}" | head -n 8
+            "$BUILD_TOOLS_DIR/aapt2" dump badging "$APK" | head -n 8 | tee verify.txt
           fi
+
+          # 2) The APK must be signed, otherwise it cannot be installed.
+          if [ -x "$BUILD_TOOLS_DIR/apksigner" ]; then
+            "$BUILD_TOOLS_DIR/apksigner" verify --print-certs "$APK" | tee -a verify.txt
+          else
+            echo "::error::apksigner not found - cannot verify the APK signature"
+            exit 1
+          fi
+
+          # 3) A DEX payload must exist, i.e. the engine classes made it in.
+          unzip -l "$APK" | grep -q "classes.dex" || { echo "::error::APK contains no classes.dex"; exit 1; }
+
+          {
+            echo "### APK verification"
+            echo '```'
+            cat verify.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
