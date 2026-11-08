@@ -60,9 +60,9 @@ jobs:
             echo "EXIT: ${{ steps.build.outputs.exit }}"
             echo "=== ERROR COUNT: $(grep -c 'error:' /tmp/build.log 2>/dev/null) ==="
             echo "=== UNIQUE ERRORS ==="
-            grep 'error:' /tmp/build.log 2>/dev/null | sed 's#/home/runner/work/Both-Engine/Both-Engine/##' | sort -u
+            (grep 'error:' /tmp/build.log 2>/dev/null | sed 's#/home/runner/work/Both-Engine/Both-Engine/##' | sort -u) || true
             echo "=== FAILURE LINES ==="
-            grep -E '^\* What went wrong|^> Task .* FAILED|^e: |^Caused by' -A3 /tmp/build.log 2>/dev/null | tail -n 60
+            (grep -E '^\* What went wrong|^> Task .* FAILED|^e: |^Caused by' -A3 /tmp/build.log 2>/dev/null | tail -n 60) || true
           } > $OUT
 
           python3 - <<'PYEOF'

@@ -2,7 +2,7 @@ name: Build APK
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, arena/d50b25a3-both-engine]
     tags: ['v*']
   pull_request:
     branches: [main, master]
