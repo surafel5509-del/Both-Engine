@@ -107,6 +107,10 @@ def main():
     total = 0
     non_black = 0
     luminance_sum = 0
+    # The default scene's cube is warm (orange); the background is cool navy.
+    # Counting warm pixels therefore proves the geometry is on screen and not
+    # merely a cleared buffer.
+    warm = 0
 
     for y in range(0, height, step):
         row = rows[y]
@@ -119,6 +123,8 @@ def main():
             luminance_sum += (r * 299 + g * 587 + b * 114) // 1000
             if r + g + b > 36:
                 non_black += 1
+            if r > 90 and r > g + 15 and g >= b:
+                warm += 1
             # Quantise to 5 bits per channel so gradients do not explode the count.
             colours.add(((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3))
 
@@ -128,6 +134,23 @@ def main():
     print("distinct=%d" % len(colours))
     print("bright=%d" % (100 * non_black // total))
     print("avg=%d" % (luminance_sum // total))
+    print("warm=%d" % (100 * warm // total))
+
+    # Human-readable preview so the rendered output can be inspected from the
+    # CI run summary without downloading the screenshot.
+    preview_w, preview_h = 48, 16
+    gradient = " .:-=+*#%@"
+    print("preview:")
+    for gy in range(preview_h):
+        line = []
+        for gx in range(preview_w):
+            x = min(width - 1, gx * width // preview_w)
+            y = min(height - 1, gy * height // preview_h)
+            base = x * channels
+            row = rows[y]
+            lum = (row[base] * 299 + row[base + 1] * 587 + row[base + 2] * 114) // 1000
+            line.append(gradient[min(len(gradient) - 1, lum * len(gradient) // 256)])
+        print("|" + "".join(line) + "|")
 
 
 if __name__ == "__main__":

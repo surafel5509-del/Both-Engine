@@ -151,16 +151,28 @@ test_apk() {
   note_env "COLOURS[$label]=$colours"
   local distinct bright
   distinct="$(printf '%s' "$colours" | sed -n 's/^distinct=//p')"
+  warm="$(printf '%s' "$colours" | sed -n 's/^warm=//p')"
+  case "$warm" in ''|*[!0-9]*) warm=0 ;; esac
   bright="$(printf '%s' "$colours" | sed -n 's/^bright=//p')"
   case "$distinct" in ''|*[!0-9]*) distinct=0 ;; esac
   case "$bright" in ''|*[!0-9]*) bright=0 ;; esac
 
-  summary "Screen: $distinct distinct colours, $bright% non-black pixels."
+  summary "Screen: $distinct distinct colours, $bright% non-black, **$warm% warm (scene content)**."
+  printf '%s\n' "$colours" | sed -n '/^preview:/,$p' | sed 's/^/    /' >> "$SUMMARY" || true
 
   if [ "$distinct" -lt 8 ] || [ "$bright" -lt 3 ]; then
     annotate error "Black-screen-$label" \
       "Screen is effectively blank ($distinct colours, $bright% non-black pixels)"
     summary "FAIL: the screen is blank."
+    return 1
+  fi
+
+  # A cleared buffer plus a gradient background would pass the test above even
+  # with no geometry drawn, so require the lit cube (warm pixels) to be present.
+  if [ "$warm" -lt 2 ]; then
+    annotate error "No-geometry-$label" \
+      "Background is drawn but no scene geometry is visible ($warm% warm pixels)"
+    summary "FAIL: nothing but a background is drawn."
     return 1
   fi
 
@@ -199,7 +211,7 @@ test_apk() {
   summary ""
 
   annotate notice "Smoke test $label" \
-    "PASS: displayed, GL surface created, $frames frames, $distinct colours ($bright% non-black), pid $pid alive"
+    "PASS: displayed, GL surface created, $frames frames, $distinct colours, $warm% scene pixels, pid $pid alive"
   summary "PASS: displayed, GL surface created, **$frames frames** rendered, " \
     "$distinct colours on screen, pid \`$pid\` alive."
   return 0
