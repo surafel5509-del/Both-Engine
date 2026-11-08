@@ -125,8 +125,12 @@ jobs:
           {
             echo "Automated diagnostics from workflow run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
             echo ""
+            echo "Total compiler errors: $(grep -cE 'error: ' build.log)"
+            echo ""
             echo '```'
-            grep -E "error:|FAILURE:|What went wrong|Caused by" build.log | head -n 400 || tail -n 200 build.log
+            # Keep symbol/location detail lines, which follow each error line.
+            grep -nE "error: |symbol: |location: |required: |found: |reason: |^/home/runner|warning: " build.log \
+              | head -n 3000 | cut -c1-300 || tail -n 300 build.log
             echo '```'
           } > diagnostic-comment.md
 
