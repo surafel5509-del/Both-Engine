@@ -99,26 +99,27 @@ public class GameActivity extends Activity {
             
             // Set OpenGL ES version
             glSurfaceView.setEGLContextClientVersion(2);
-            
-            // Set render mode
-            glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-            
-            // Get render manager from engine and attach a renderer BEFORE the
-            // view is attached. GLSurfaceView.onResume() throws a
-            // NullPointerException when its GL thread was never created, so the
-            // surface must be fully configured first.
+
+            // ORDER MATTERS. GLSurfaceView.setRenderMode() and onResume() both
+            // dereference mGLThread, which only exists after setRenderer() has
+            // been called. Calling setRenderMode() first throws a
+            // NullPointerException and the activity never gets a content view.
             if (engine != null) {
                 renderManager = engine.getRenderManager();
             }
             if (renderManager != null) {
                 renderManager.initialize(glSurfaceView);
-            } else {
+            }
+            if (renderManager == null || renderManager.getRenderer() == null) {
                 // Never leave a bare GLSurfaceView behind: attach a fallback
                 // renderer so the GL thread exists and lifecycle calls are safe.
-                Log.w(TAG, "No RenderManager available, attaching fallback renderer");
+                Log.w(TAG, "No RenderManager renderer available, attaching fallback renderer");
                 glSurfaceView.setRenderer(new FallbackRenderer());
             }
             glSurfaceViewResumable = true;
+
+            // Safe now: the GL thread has been created by setRenderer().
+            glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 
             // Set content view
             setContentView(glSurfaceView);
@@ -234,9 +235,8 @@ public class GameActivity extends Activity {
         stopGame();
 
         try {
-            if (glSurfaceView != null) {
+            if (glSurfaceView != null && glSurfaceViewResumable) {
                 glSurfaceView.onPause();
-                glSurfaceView.setRenderer(null);
             }
         } catch (Exception e) {
             Log.w(TAG, "Error releasing surface: " + e.getMessage(), e);
