@@ -61,47 +61,10 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
-            # Resolve the APK independently of the action's working directory.
-            APK="$(find "$GITHUB_WORKSPACE/app/build/outputs/apk/debug" -name '*.apk' 2>/dev/null | head -n1)"
-            if [ -z "$APK" ]; then
-              echo "No APK under $GITHUB_WORKSPACE/app/build/outputs; rebuilding" >> smoke.env
-              (cd "$GITHUB_WORKSPACE" && ./gradlew --no-daemon assembleDebug) >> smoke.env 2>&1 || true
-              APK="$(find "$GITHUB_WORKSPACE/app/build/outputs/apk/debug" -name '*.apk' 2>/dev/null | head -n1)"
-            fi
-            echo "APK=$APK" > smoke.env
-            echo "PWD=$(pwd)" >> smoke.env
-            if [ -z "$APK" ]; then
-              echo "INSTALL_BEGIN" >> smoke.env
-              echo "failure: no APK produced" >> smoke.env
-              echo "INSTALL_END" >> smoke.env
-              exit 0
-            fi
-            echo "INSTALL_BEGIN" >> smoke.env
-            adb install -r -t "$APK" >> smoke.env 2>&1 || true
-            echo "INSTALL_END" >> smoke.env
-            # What the APK itself declares as installable entry point.
-            BT="$(ls -d "${ANDROID_SDK_ROOT}/build-tools/"* 2>/dev/null | sort -V | tail -n1 || true)"
-            if [ -n "$BT" ] && [ -x "$BT/aapt2" ]; then
-              "$BT/aapt2" dump badging "$APK" 2>/dev/null | grep -E "^package:|^launchable-activity:" >> smoke.env || true
-            fi
-            adb shell pm list packages | grep bothengine >> smoke.env 2>&1 || true
-            adb logcat -c || true
-            # Stream from BEFORE the launch: the crash can happen within milliseconds
-            # and would otherwise be evicted from the ring buffer.
-            (adb logcat -v threadtime > logcat.txt 2>&1 &) || true
-            sleep 2
-            adb shell am start -W -n com.bothengine.game/com.bothengine.GameActivity > am-start.txt 2>&1 || true
-            if grep -q "Error" am-start.txt; then
-              adb shell monkey -p com.bothengine.game -c android.intent.category.LAUNCHER 1 >> am-start.txt 2>&1 || true
-            fi
-            cat am-start.txt >> smoke.env
-            sleep 15
-            echo "PID=$(adb shell pidof com.bothengine.game | tr -d '\r')" >> smoke.env
-            pkill -f "adb logcat" || true
-            adb logcat -d >> logcat.txt 2>/dev/null || true
-            adb shell dumpsys activity activities > activities.txt 2>/dev/null || true
-            cat smoke.env
-            true
+            chmod +x scripts/emulator-smoke.sh
+            ./scripts/emulator-smoke.sh
+            echo "SMOKE_RC=$?" >> smoke.env || true
+
 
       - name: Report smoke test result
         if: always()
@@ -110,10 +73,14 @@ jobs:
           set -uo pipefail
           echo "### Smoke test" >> "$GITHUB_STEP_SUMMARY"
 
-          # Fall back to the emulator step's own log if the script never ran.
+          if [ "${{ steps.smoke.outcome }}" = "success" ]; then
+            echo "::notice title=Smoke test::App launched and stayed alive"
+            exit 0
+          fi
+
           if [ ! -f smoke.env ]; then
-            echo "::error title=Smoke test::The emulator script did not run to completion"
-            echo "- emulator script did not start" >> "$GITHUB_STEP_SUMMARY"
+            echo "::error title=Smoke test::The emulator script did not run (harness problem)"
+            echo "- emulator script did not start; see the workflow log" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
 
