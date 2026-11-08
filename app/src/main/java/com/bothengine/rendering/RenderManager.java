@@ -23,6 +23,7 @@ public class RenderManager {
     private Renderer renderer;
     private Camera mainCamera;
     private Camera uiCamera;
+    private Engine engine;
     
     private int viewportWidth;
     private int viewportHeight;
@@ -43,26 +44,46 @@ public class RenderManager {
         this.cullingEnabled = true;
         this.depthTestingEnabled = true;
         this.blendingEnabled = true;
+        this.engine = null;
         
         Log.i(TAG, "RenderManager initialized");
+    }
+    
+    /**
+     * Set the engine reference
+     */
+    public void setEngine(Engine engine) {
+        this.engine = engine;
+        if (renderer != null) {
+            renderer.setEngine(engine);
+        }
     }
     
     /**
      * Initialize the render manager with a GLSurfaceView
      */
     public void initialize(GLSurfaceView glSurfaceView) {
-        this.glSurfaceView = glSurfaceView;
-        this.renderer = new Renderer(config);
-        glSurfaceView.setRenderer(renderer);
-        
-        // Set render mode
-        glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-        
-        // Create cameras
-        this.mainCamera = new Camera(CameraType.PERSPECTIVE);
-        this.uiCamera = new Camera(CameraType.ORTHOGRAPHIC);
-        
-        Log.i(TAG, "RenderManager initialized with GLSurfaceView");
+        try {
+            this.glSurfaceView = glSurfaceView;
+            
+            // Create renderer
+            this.renderer = new Renderer(config);
+            if (engine != null) {
+                renderer.setEngine(engine);
+            }
+            glSurfaceView.setRenderer(renderer);
+            
+            // Set render mode
+            glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+            
+            // Create cameras
+            this.mainCamera = new Camera(CameraType.PERSPECTIVE);
+            this.uiCamera = new Camera(CameraType.ORTHOGRAPHIC);
+            
+            Log.i(TAG, "RenderManager initialized with GLSurfaceView");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to initialize RenderManager: " + e.getMessage(), e);
+        }
     }
     
     /**
@@ -84,6 +105,13 @@ public class RenderManager {
      */
     public Camera getUICamera() {
         return uiCamera;
+    }
+    
+    /**
+     * Get the renderer
+     */
+    public Renderer getRenderer() {
+        return renderer;
     }
     
     /**

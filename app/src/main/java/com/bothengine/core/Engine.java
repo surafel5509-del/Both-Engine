@@ -56,6 +56,9 @@ public class Engine {
         this.updateSystem = new UpdateSystem(config);
         this.renderSystem = new RenderSystem(config);
         
+        // Set engine reference in render manager
+        this.renderManager.setEngine(this);
+        
         Log.i(TAG, "Both Engine Initialized Successfully");
     }
     
