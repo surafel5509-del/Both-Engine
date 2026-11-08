@@ -139,7 +139,31 @@ test_apk() {
     return 1
   fi
 
-  # ---- positive proof
+  # ---- positive proof: the screen must actually contain a rendered image.
+  # "Process alive" and "frames rendered" both stayed green on a purely black
+  # screen, so the framebuffer is sampled and checked for non-black pixels.
+  local shot="$OUT_DIR/screen-$label.png"
+  adb exec-out screencap -p > "$shot" 2>/dev/null || true
+  local colours=""
+  if [ -s "$shot" ]; then
+    colours="$(python3 "$PROJECT_DIR/scripts/screenshot_colours.py" "$shot" 2>/dev/null || true)"
+  fi
+  note_env "COLOURS[$label]=$colours"
+  local distinct bright
+  distinct="$(printf '%s' "$colours" | sed -n 's/^distinct=//p')"
+  bright="$(printf '%s' "$colours" | sed -n 's/^bright=//p')"
+  case "$distinct" in ''|*[!0-9]*) distinct=0 ;; esac
+  case "$bright" in ''|*[!0-9]*) bright=0 ;; esac
+
+  summary "Screen: $distinct distinct colours, $bright% non-black pixels."
+
+  if [ "$distinct" -lt 8 ] || [ "$bright" -lt 3 ]; then
+    annotate error "Black-screen-$label" \
+      "Screen is effectively blank ($distinct colours, $bright% non-black pixels)"
+    summary "FAIL: the screen is blank."
+    return 1
+  fi
+
   local displayed surface
   displayed="$(grep -m1 "Displayed $PKG" "$logcat" 2>/dev/null | tr -d '\r')"
   surface="$(grep -m1 "Surface created" "$logcat" 2>/dev/null | tr -d '\r')"
@@ -176,7 +200,8 @@ test_apk() {
 
   annotate notice "Smoke test $label" \
     "PASS: displayed, GL surface created, $frames frames rendered, pid $pid alive"
-  summary "PASS: displayed, GL surface created, **$frames frames** rendered, pid \`$pid\` alive."
+  summary "PASS: displayed, GL surface created, **$frames frames** rendered, " \
+    "$distinct colours on screen, pid \`$pid\` alive."
   return 0
 }
 

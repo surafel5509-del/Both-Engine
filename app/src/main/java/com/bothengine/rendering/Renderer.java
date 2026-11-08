@@ -25,6 +25,9 @@ public class Renderer implements GLSurfaceView.Renderer {
     private float accumulator;
     private boolean gameRunning = true;
     private int framesRendered;
+    private final SceneRenderer sceneRenderer = new SceneRenderer();
+    private int surfaceWidth = 1;
+    private int surfaceHeight = 1;
     
     public Renderer(EngineConfig config) {
         this.config = config;
@@ -43,7 +46,10 @@ public class Renderer implements GLSurfaceView.Renderer {
             
             // Initialize OpenGL
             GLES20Helper.initialize(gl);
-            
+
+            // Build the default scene so the very first frame has content.
+            sceneRenderer.initialize();
+
             // Clear screen
             clearScreen(gl);
             
@@ -63,6 +69,9 @@ public class Renderer implements GLSurfaceView.Renderer {
         try {
             Log.i(TAG, "Surface changed: " + width + "x" + height);
             
+            surfaceWidth = width;
+            surfaceHeight = height;
+
             // Set viewport
             gl.glViewport(0, 0, width, height);
             
@@ -106,8 +115,8 @@ public class Renderer implements GLSurfaceView.Renderer {
                 accumulator -= fixedDeltaTime;
             }
             
-            // Clear screen
-            clearScreen(gl);
+            // Draw the default scene (gradient background + spinning cube).
+            sceneRenderer.drawFrame(deltaTime, surfaceWidth, surfaceHeight);
             
             // Variable update and render
             if (engine != null) {
@@ -142,7 +151,13 @@ public class Renderer implements GLSurfaceView.Renderer {
     public void shutdown() {
         gameRunning = false;
         engine = null;
+        sceneRenderer.release();
         Log.i(TAG, "Renderer shutdown");
+    }
+
+    /** Whether the default scene compiled and is drawing. */
+    public boolean isSceneReady() {
+        return sceneRenderer.isReady();
     }
 
     /**

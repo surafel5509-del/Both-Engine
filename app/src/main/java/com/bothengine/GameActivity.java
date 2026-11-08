@@ -294,20 +294,35 @@ public class GameActivity extends Activity {
     private static final class FallbackRenderer implements GLSurfaceView.Renderer {
         private static final String TAG = "FallbackRenderer";
 
+        private final com.bothengine.rendering.SceneRenderer scene =
+            new com.bothengine.rendering.SceneRenderer();
+        private int width = 1;
+        private int height = 1;
+        private long lastFrameNanos;
+
         @Override
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
             Log.i(TAG, "Fallback surface created");
-            GLES20.glClearColor(0.05f, 0.05f, 0.08f, 1.0f);
+            scene.initialize();
+            lastFrameNanos = System.nanoTime();
         }
 
         @Override
         public void onSurfaceChanged(GL10 gl, int width, int height) {
+            this.width = width;
+            this.height = height;
             GLES20.glViewport(0, 0, width, height);
         }
 
         @Override
         public void onDrawFrame(GL10 gl) {
-            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+            long now = System.nanoTime();
+            float delta = lastFrameNanos == 0 ? 0.016f : (now - lastFrameNanos) / 1_000_000_000f;
+            lastFrameNanos = now;
+            if (delta > 0.1f) {
+                delta = 0.1f;
+            }
+            scene.drawFrame(delta, width, height);
         }
     }
 
