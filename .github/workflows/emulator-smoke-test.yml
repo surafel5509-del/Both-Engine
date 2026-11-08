@@ -1,7 +1,7 @@
 name: App Smoke Test
 
 # Boots an Android emulator, installs the APK, launches the app and asserts it
-# stays alive. Captures the crash trace when it does not.
+# stays alive. Any crash trace is published to the run summary and annotations.
 on:
   workflow_dispatch:
   push:
@@ -18,7 +18,7 @@ jobs:
   emulator:
     name: Launch app on emulator
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -51,6 +51,8 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Boot emulator and launch the app
+        id: smoke
+        continue-on-error: true
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
@@ -59,48 +61,67 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
-            set -uo pipefail
             APK=$(find app/build/outputs/apk/debug -name '*.apk' | head -n1)
-            adb install -r -t "$APK"
-
-            adb logcat -c
-            adb shell am start -W -n com.bothengine.game/.GameActivity || true
-            sleep 12
-
-            PID=$(adb shell pidof com.bothengine.game | tr -d '\r')
-            adb logcat -d > logcat.txt || true
+            echo "APK=$APK" > smoke.env
+            adb install -r -t "$APK" >> smoke.env 2>&1 || true
+            adb logcat -c || true
+            adb shell am start -W -n com.bothengine.game/.GameActivity >> smoke.env 2>&1 || true
+            sleep 15
+            echo "PID=$(adb shell pidof com.bothengine.game | tr -d '\r')" >> smoke.env
+            adb logcat -d > logcat.txt 2>/dev/null || true
             adb shell dumpsys activity activities > activities.txt 2>/dev/null || true
+            cat smoke.env
+            true
 
-            echo "### Smoke test" >> "$GITHUB_STEP_SUMMARY"
-            echo "- APK: \`$APK\`" >> "$GITHUB_STEP_SUMMARY"
-            echo "- pid after 12s: \`${PID:-<none>}\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Report smoke test result
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          echo "### Smoke test" >> "$GITHUB_STEP_SUMMARY"
 
-            if adb logcat -d | grep -q "FATAL EXCEPTION"; then
-              echo "### Crash trace" >> "$GITHUB_STEP_SUMMARY"
-              echo '```' >> "$GITHUB_STEP_SUMMARY"
-              adb logcat -d | sed -n '/FATAL EXCEPTION/,/^$/p' | head -n 80 >> "$GITHUB_STEP_SUMMARY"
-              echo '```' >> "$GITHUB_STEP_SUMMARY"
-              adb logcat -d | sed -n '/FATAL EXCEPTION/,/^$/p' | head -n 25 | \
+          # Fall back to the emulator step's own log if the script never ran.
+          if [ ! -f smoke.env ]; then
+            echo "::error title=Smoke test::The emulator script did not run to completion"
+            echo "- emulator script did not start" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          cat smoke.env >> "$GITHUB_STEP_SUMMARY" || true
+          PID="$(sed -n 's/^PID=//p' smoke.env | tr -d '\r')"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- pid after 15s: \`${PID:-<none>}\`" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -f logcat.txt ]; then
+            CRASH="$(sed -n '/FATAL EXCEPTION/,/^$/p' logcat.txt | head -n 60)"
+            if [ -n "$CRASH" ]; then
+              {
+                echo "### Crash trace"
+                echo '```'
+                echo "$CRASH"
+                echo '```'
+              } >> "$GITHUB_STEP_SUMMARY"
+              echo "$CRASH" | head -n 20 | while IFS= read -r line; do
+                echo "::error title=Crash::$line"
+              done
+              exit 1
+            fi
+            # ANR / native crash fallbacks
+            if grep -qE "ANR in com.bothengine|Fatal signal" logcat.txt; then
+              echo "### Fatal signal / ANR" >> "$GITHUB_STEP_SUMMARY"
+              grep -E "ANR in com.bothengine|Fatal signal|backtrace" logcat.txt | head -n 10 | \
                 while IFS= read -r line; do echo "::error title=Crash::$line"; done
               exit 1
             fi
+          fi
 
-            if [ -z "$PID" ]; then
-              echo "::error title=Crash::App process is not running after launch"
-              adb logcat -d | grep -E "AndroidRuntime|bothengine|ActivityManager: Start proc|Displayed" | tail -n 60 || true
-              exit 1
-            fi
+          if [ -z "$PID" ]; then
+            echo "::error title=Smoke test::App process is not running after launch"
+            grep -E "AndroidRuntime|bothengine|Start proc|Displayed|ActivityTaskManager" logcat.txt 2>/dev/null | tail -n 25 | \
+              while IFS= read -r line; do echo "::error title=App state::$line"; done || true
+            exit 1
+          fi
 
-            echo "::notice title=Smoke test::App launched and is running (pid $PID)"
-            adb logcat -d | grep -E "Displayed com.bothengine|GameActivity|EngineApplication" | head -n 20 || true
-
-      - name: Upload logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: emulator-logs
-          path: |
-            logcat.txt
-            activities.txt
-          if-no-files-found: ignore
-          retention-days: 7
+          echo "::notice title=Smoke test::App launched and is running (pid $PID)"
+          grep -E "Displayed com.bothengine|GameActivity|EngineApplication" logcat.txt 2>/dev/null | head -n 12 | \
+            while IFS= read -r line; do echo "::notice title=App log::$line"; done || true
