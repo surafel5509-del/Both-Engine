@@ -149,6 +149,18 @@ test_apk() {
     colours="$(python3 "$PROJECT_DIR/scripts/screenshot_colours.py" "$shot" 2>/dev/null || true)"
   fi
   note_env "COLOURS[$label]=$colours"
+
+  # Publish the frame as base64 inside a collapsible summary block: CI artefacts
+  # are not retrievable for this job, and a picture settles "is it really
+  # drawing?" faster than any number.
+  if [ -s "$shot" ] && command -v base64 >/dev/null 2>&1; then
+    summary "<details><summary>Screenshot ($label)</summary>"
+    summary ""
+    summary "\`\`\`"
+    summary "base64:$(base64 -w0 "$shot" 2>/dev/null | head -c 400000)"
+    summary "\`\`\`"
+    summary "</details>"
+  fi
   local distinct bright
   distinct="$(printf '%s' "$colours" | sed -n 's/^distinct=//p')"
   warm="$(printf '%s' "$colours" | sed -n 's/^warm=//p')"
