@@ -13,6 +13,7 @@ public class SpriteRendererComponent extends Component {
     private Sprite sprite;
     private boolean visible;
     private int renderQueue;
+    private float[] uvCoords = {0f, 0f, 1f, 1f};
     
     public SpriteRendererComponent() {
         this.sprite = new Sprite();
@@ -58,6 +59,19 @@ public class SpriteRendererComponent extends Component {
     
     public void setTexture(Texture texture) {
         sprite.setTexture(texture);
+    }
+
+    /**
+     * UV rectangle used when drawing the sprite (left, top, right, bottom).
+     */
+    public float[] getUvCoords() {
+        return uvCoords.clone();
+    }
+
+    public void setUvCoords(float[] uvCoords) {
+        if (uvCoords != null && uvCoords.length == 4) {
+            this.uvCoords = uvCoords.clone();
+        }
     }
     
     public Color getColor() {

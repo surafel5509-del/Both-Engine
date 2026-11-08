@@ -3,7 +3,7 @@ package com.bothengine.animation;
 import com.bothengine.components.TransformComponent;
 import com.bothengine.core.ecs.Component;
 import com.bothengine.rendering.Vector3;
-import com.bothengine.rendering.Quaternion;
+import com.bothengine.components.Quaternion;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -112,10 +112,11 @@ public class AnimatorComponent extends Component {
         Vector3 scale = clip.sampleScale("root", currentTime);
         
         // If in transition, blend with next state
+        float blendFactor = 0f;
         if (controller.isInTransition() && nextState != null) {
             AnimationClip nextClip = nextState.getClip();
             float nextTime = nextState.getTime();
-            float blendFactor = controller.getTransitionProgress();
+            blendFactor = controller.getTransitionProgress();
             
             Vector3 nextPosition = nextClip.samplePosition("root", nextTime);
             Quaternion nextRotation = nextClip.sampleRotation("root", nextTime);

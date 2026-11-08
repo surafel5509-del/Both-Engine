@@ -1,6 +1,7 @@
 package com.bothengine;
 
 import android.app.Activity;
+import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,6 +11,10 @@ import android.view.WindowManager;
 import com.bothengine.core.Engine;
 import com.bothengine.core.EngineConfig;
 import com.bothengine.core.EngineApplication;
+import com.bothengine.rendering.RenderManager;
+
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 
 
 
@@ -31,6 +36,8 @@ public class GameActivity extends Activity {
     private float fixedDeltaTime;
     private float accumulator;
     private RenderManager renderManager;
+    private volatile boolean glSurfaceViewResumable;
+    private volatile boolean surfaceReady;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,15 +64,13 @@ public class GameActivity extends Activity {
                 Log.e(TAG, "Engine is null, creating new engine");
                 // Create engine if not initialized
                 EngineConfig config = new EngineConfig.Builder()
-                    .setContext(this)
+                    .setContext(getApplicationContext())
                     .setTargetFPS(60)
                     .setEnablePhysics(true)
                     .setEnableAudio(true)
                     .setEnableLogging(true)
                     .build();
                 engine = new Engine(config);
-                application = new EngineApplication();
-                application.onCreate();
             }
             
             // Initialize OpenGL
@@ -94,21 +99,53 @@ public class GameActivity extends Activity {
             
             // Set OpenGL ES version
             glSurfaceView.setEGLContextClientVersion(2);
-            
-            // Set render mode
-            glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-            
-            // Set content view
-            setContentView(glSurfaceView);
-            
-            // Get render manager from engine
+
+            // ORDER MATTERS. GLSurfaceView.setRenderMode() and onResume() both
+            // dereference mGLThread, which only exists after setRenderer() has
+            // been called. Calling setRenderMode() first throws a
+            // NullPointerException and the activity never gets a content view.
             if (engine != null) {
                 renderManager = engine.getRenderManager();
-                if (renderManager != null) {
-                    renderManager.initialize(glSurfaceView);
-                }
             }
-            
+            if (renderManager != null) {
+                renderManager.initialize(glSurfaceView);
+            }
+            if (renderManager == null || renderManager.getRenderer() == null) {
+                // Never leave a bare GLSurfaceView behind: attach a fallback
+                // renderer so the GL thread exists and lifecycle calls are safe.
+                Log.w(TAG, "No RenderManager renderer available, attaching fallback renderer");
+                glSurfaceView.setRenderer(new FallbackRenderer());
+            }
+            glSurfaceViewResumable = true;
+
+            // Safe now: the GL thread has been created by setRenderer().
+            glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+
+            // Wrap the surface in a layout so a build label can be drawn on top.
+            setContentView(R.layout.activity_game);
+            android.widget.FrameLayout root = findViewById(R.id.game_root);
+            android.widget.TextView label = findViewById(R.id.build_label);
+            if (root != null && glSurfaceView != null) {
+                root.addView(glSurfaceView, 0,
+                    new android.widget.FrameLayout.LayoutParams(
+                        android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.FrameLayout.LayoutParams.MATCH_PARENT));
+            }
+            if (label != null) {
+                final android.widget.TextView buildLabel = label;
+                buildLabel.setText(buildLabelText());
+                // The scene is built on the GL thread, so refresh the label once
+                // rendering has had a chance to start.
+                buildLabel.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        String text = buildLabelText();
+                        buildLabel.setText(text);
+                        Log.i(TAG, "Build label: " + text);
+                    }
+                }, 1500);
+            }
+
             Log.i(TAG, "OpenGL initialized");
         } catch (Exception e) {
             Log.e(TAG, "Failed to initialize OpenGL: " + e.getMessage(), e);
@@ -162,13 +199,23 @@ public class GameActivity extends Activity {
         super.onResume();
         
         Log.i(TAG, "GameActivity onResume");
-        
-        if (glSurfaceView != null) {
-            glSurfaceView.onResume();
+
+        // GLSurfaceView.onResume() throws NullPointerException when no renderer
+        // was ever set (no GL thread). Only resume a fully configured view.
+        try {
+            if (glSurfaceView != null && glSurfaceViewResumable) {
+                glSurfaceView.onResume();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to resume surface: " + e.getMessage(), e);
         }
-        
-        if (renderManager != null && renderManager.getRenderer() != null) {
-            renderManager.getRenderer().resume();
+
+        try {
+            if (renderManager != null && renderManager.getRenderer() != null) {
+                renderManager.getRenderer().resume();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to resume renderer: " + e.getMessage(), e);
         }
         
         if (!gameRunning) {
@@ -181,13 +228,21 @@ public class GameActivity extends Activity {
         super.onPause();
         
         Log.i(TAG, "GameActivity onPause");
-        
-        if (glSurfaceView != null) {
-            glSurfaceView.onPause();
+
+        try {
+            if (glSurfaceView != null && glSurfaceViewResumable) {
+                glSurfaceView.onPause();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to pause surface: " + e.getMessage(), e);
         }
-        
-        if (renderManager != null && renderManager.getRenderer() != null) {
-            renderManager.getRenderer().pause();
+
+        try {
+            if (renderManager != null && renderManager.getRenderer() != null) {
+                renderManager.getRenderer().pause();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to pause renderer: " + e.getMessage(), e);
         }
         
         gameRunning = false;
@@ -200,10 +255,16 @@ public class GameActivity extends Activity {
         Log.i(TAG, "GameActivity onDestroy");
         
         stopGame();
-        
-        if (glSurfaceView != null) {
-            glSurfaceView = null;
+
+        try {
+            if (glSurfaceView != null && glSurfaceViewResumable) {
+                glSurfaceView.onPause();
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Error releasing surface: " + e.getMessage(), e);
         }
+        glSurfaceViewResumable = false;
+        glSurfaceView = null;
     }
     
 
@@ -248,19 +309,84 @@ public class GameActivity extends Activity {
     }
     
     /**
-     * Show error message and finish activity
+     * Minimal renderer used only when the engine has no RenderManager.
+     * Its sole purpose is to create a valid GL thread so that
+     * GLSurfaceView.onResume()/onPause() cannot throw.
+     */
+    private static final class FallbackRenderer implements GLSurfaceView.Renderer {
+        private static final String TAG = "FallbackRenderer";
+
+        private final com.bothengine.rendering.SceneRenderer scene =
+            new com.bothengine.rendering.SceneRenderer();
+        private int width = 1;
+        private int height = 1;
+        private long lastFrameNanos;
+
+        @Override
+        public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+            Log.i(TAG, "Fallback surface created");
+            scene.initialize();
+            lastFrameNanos = System.nanoTime();
+        }
+
+        @Override
+        public void onSurfaceChanged(GL10 gl, int width, int height) {
+            this.width = width;
+            this.height = height;
+            GLES20.glViewport(0, 0, width, height);
+        }
+
+        @Override
+        public void onDrawFrame(GL10 gl) {
+            long now = System.nanoTime();
+            float delta = lastFrameNanos == 0 ? 0.016f : (now - lastFrameNanos) / 1_000_000_000f;
+            lastFrameNanos = now;
+            if (delta > 0.1f) {
+                delta = 0.1f;
+            }
+            scene.drawFrame(delta, width, height);
+        }
+    }
+
+    /**
+     * Short text identifying the build, shown over the rendered scene.
+     */
+    private String buildLabelText() {
+        String version;
+        try {
+            android.content.pm.PackageInfo info = getPackageManager()
+                .getPackageInfo(getPackageName(), 0);
+            version = info.versionName + " (" + info.versionCode + ")";
+        } catch (Throwable t) {
+            version = "unknown";
+        }
+        boolean live = renderManager != null && renderManager.getRenderer() != null
+            && renderManager.getRenderer().isSceneReady();
+        String scene = live ? "scene live" : "scene starting";
+        if (live && gameRunning) {
+            scene = "rendering";
+        }
+        return "Both Engine " + version + " \u00b7 " + scene;
+    }
+
+    /**
+     * Report a fatal startup error without killing the app: the screen stays
+     * up showing the reason, which makes a remote crash far easier to diagnose.
      */
     private void showErrorAndFinish(String message) {
         Log.e(TAG, "Fatal error: " + message);
         try {
-            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-            builder.setTitle("Error");
-            builder.setMessage(message);
-            builder.setPositiveButton("OK", (dialog, which) -> finish());
-            builder.setCancelable(false);
-            builder.show();
-        } catch (Exception e) {
-            // If we can't show dialog, just finish
+            android.widget.TextView view = new android.widget.TextView(this);
+            view.setBackgroundColor(0xFF101018);
+            view.setTextColor(0xFFFF6B6B);
+            view.setTextSize(15f);
+            view.setPadding(48, 96, 48, 48);
+            view.setText("Both Engine could not start the renderer.\n\n"
+                + message
+                + "\n\nThe engine is still running; press Back to exit.");
+            setContentView(view);
+        } catch (Throwable t) {
+            Log.e(TAG, "Could not display error screen: " + t.getMessage(), t);
             finish();
         }
     }

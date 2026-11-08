@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Wraps the GLSurfaceView in a FrameLayout so a small status label can be
+    drawn over the rendered scene. Seeing this label over a rotating cube is the
+    quickest way to confirm, on a real device, which build is running and that
+    rendering is live.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/game_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <TextView
+        android:id="@+id/build_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="12dp"
+        android:padding="6dp"
+        android:textColor="#FFB070"
+        android:textSize="12sp"
+        android:shadowColor="#000000"
+        android:shadowRadius="3"
+        android:text="" />
+
+</FrameLayout>

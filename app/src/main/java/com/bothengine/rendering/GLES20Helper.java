@@ -18,6 +18,45 @@ public class GLES20Helper {
     /**
      * Clear the screen
      */
+    /**
+     * Initialize GL state with the surface's GL10 context (called from the renderer).
+     */
+    public static void initialize(javax.microedition.khronos.opengles.GL10 gl) {
+        // OpenGL ES 2.0 state is configured through GLES20; the GL10 handle is
+        // only needed to confirm a context exists.
+        if (gl == null) {
+            Log.w(TAG, "initialize() called with a null GL context");
+            return;
+        }
+        enableDepthTesting(true);
+        enableCulling(true);
+        enableBlending(true);
+        Log.i(TAG, "GLES20Helper initialized");
+    }
+
+    /**
+     * Bind a VBO to a shader attribute and enable that attribute array.
+     */
+    public static void enableVertexAttribArray(int location, int componentCount, int strideBytes, int vbo) {
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
+        GLES20.glEnableVertexAttribArray(location);
+        GLES20.glVertexAttribPointer(location, componentCount, GLES20.GL_FLOAT, false, strideBytes, 0);
+    }
+
+    /**
+     * Bind an index buffer for drawing.
+     */
+    public static void bindIndexBuffer(int ibo) {
+        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo);
+    }
+
+    /**
+     * Draw the currently bound index buffer.
+     */
+    public static void drawElements(int indexCount) {
+        GLES20.glDrawElements(GLES20.GL_TRIANGLES, indexCount, GLES20.GL_UNSIGNED_SHORT, 0);
+    }
+
     public static void clearScreen() {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
     }
@@ -70,11 +109,9 @@ public class GLES20Helper {
      * Enable wireframe mode
      */
     public static void enableWireframe(boolean enabled) {
-        if (enabled) {
-            GLES20.glPolygonMode(GLES20.GL_FRONT_AND_BACK, GLES20.GL_LINE);
-        } else {
-            GLES20.glPolygonMode(GLES20.GL_FRONT_AND_BACK, GLES20.GL_FILL);
-        }
+        // glPolygonMode does not exist in OpenGL ES 2.0; wireframe rendering is
+        // approximated by drawing with a line primitive setup instead.
+        Log.d(TAG, "Wireframe mode requested: " + enabled + " (no-op on OpenGL ES 2.0)");
     }
     
     /**
@@ -186,9 +223,9 @@ public class GLES20Helper {
      * This is a helper for OpenGL ES 3.0+
      */
     public static int createVAO() {
-        int[] vao = new int[1];
-        GLES20.glGenVertexArrays(1, vao, 0);
-        return vao[0];
+        // Vertex array objects require OpenGL ES 3.0+. Return 0 so callers that
+        // bind/unbind VAOs degrade gracefully on ES 2.0 devices.
+        return 0;
     }
     
     /**
@@ -211,8 +248,7 @@ public class GLES20Helper {
      * Delete a VAO
      */
     public static void deleteVAO(int vao) {
-        int[] vaos = new int[] { vao };
-        GLES20.glDeleteVertexArrays(1, vaos, 0);
+        // See createVAO(): nothing to release on OpenGL ES 2.0.
     }
     
     /**

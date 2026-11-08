@@ -39,6 +39,52 @@ set PATH=%PATH%;%ANDROID_HOME%\tools
 set PATH=%PATH%;%ANDROID_HOME%\platform-tools
 ```
 
+## Building the APK with GitHub Actions (recommended)
+
+The repository ships with `.github/workflows/build-apk.yml`, so no local
+Android SDK is needed. Every push to `main`, `master` or a work branch builds a
+debug APK automatically.
+
+### Get the APK
+
+1. Open the **Actions** tab of the repository.
+2. Pick the latest **Build APK** run.
+3. Download the **BothEngine-debug-apk** artifact (retained for 30 days).
+
+The run summary also lists the version, commit, size and SHA-256 of the APK.
+
+### Trigger a build manually
+
+*Actions → Build APK → Run workflow*. Two optional inputs are available:
+
+| Input | Effect |
+| --- | --- |
+| `build_release` | Also builds a release APK |
+| `publish_release` | Builds both APKs and attaches them to a GitHub Release |
+
+### Release builds and signing
+
+Pushing a tag such as `v1.2.0` builds and publishes a release. To sign it,
+add these repository secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Purpose |
+| --- | --- |
+| `KEYSTORE_BASE64` | Base64 of your `.keystore` file (`base64 -w0 app.keystore`) |
+| `KEYSTORE_PASSWORD` | Keystore password |
+| `KEY_ALIAS` | Key alias |
+| `KEY_PASSWORD` | Key password |
+
+Without these secrets the release APK is signed with the debug key so it still
+installs on a device — rotate to a real key before publishing to the Play Store.
+
+### Install the artifact
+
+```bash
+adb install BothEngine-1.0.<build>.apk
+```
+
+Android 7.0 (API 24) or newer with OpenGL ES 2.0 is required.
+
 ## Building the APK
 
 ### Method 1: Using Android Studio (Recommended)
@@ -297,6 +343,51 @@ To see all dependencies:
 ./gradlew dependencies
 ```
 
+## Runtime Smoke Test (emulator)
+
+A build that compiles is not proof that it runs. `.github/workflows/emulator-smoke-test.yml`
+boots an Android 11 emulator, installs **both** the debug and the release APK and
+launches each one, then requires all of the following before it will pass:
+
+| Check | Why |
+| --- | --- |
+| Process alive 15 s after launch | catches crashes and early exits |
+| Activity reported `Displayed` | proves a window actually appeared |
+| GL surface created + continuous frames | proves the render loop is running |
+| App's own framebuffer readback | catches a black screen that still "renders" |
+| No crash / native fault / ANR / render error in logcat | catches silent failures |
+
+The framebuffer check is the important one: `Renderer` clears to black, so a
+process that renders 600 frames per second can still be showing nothing at all.
+`SceneRenderer` therefore reads its own output back with `glReadPixels`, logs
+`SceneCheck warm=<n>% ...`, and the test fails when that is close to zero.
+
+The logic lives in [`scripts/emulator-smoke.sh`](scripts/emulator-smoke.sh), with
+the PNG statistics helper in [`scripts/screenshot_colours.py`](scripts/screenshot_colours.py).
+Run the checker on any screenshot with:
+
+```bash
+python3 scripts/screenshot_colours.py screenshot.png
+```
+
+## What the app shows
+
+On launch the app draws a built-in default scene — a gradient background with a
+lit, rotating cube — plus a small build label in the top-left corner reading, for
+example, `Both Engine 1.0.66 · rendering`. That label is the quickest way to
+confirm on a real device which build is installed and that rendering is live.
+
+## Diagnosing a crash on a real device
+
+Uncaught exceptions are logged under the `EngineApplication` tag and written to
+the app's private storage as `files/last_crash.txt`. With the device connected:
+
+```bash
+adb logcat -s EngineApplication GameActivity Renderer SceneRenderer
+adb shell run-as com.bothengine.game cat files/last_crash.txt
+```
+
+---
 ## License
 
 This project uses various open-source libraries. See [LICENSE](LICENSE) for details.

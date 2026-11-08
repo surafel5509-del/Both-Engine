@@ -109,7 +109,7 @@ public class UIEventSystem {
     
     private UIComponent hoveredComponent;
     private UIComponent draggedComponent;
-    private float lastClickTime;
+    private long lastClickTime;
     private float lastClickX;
     private float lastClickY;
     private UIComponent lastClickedComponent;

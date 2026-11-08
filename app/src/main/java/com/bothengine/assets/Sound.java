@@ -28,6 +28,7 @@ public class Sound {
     private float pitch;
     private float pan;
     private boolean looping;
+    private boolean playing;
     private int priority;
     
     public Sound(Context context, String path) {
@@ -116,6 +117,7 @@ public class Sound {
             pitch
         );
         
+        playing = streamId > 0;
         Log.d(TAG, "Sound played: " + name + " (Stream ID: " + streamId + ")");
         return streamId;
     }
@@ -138,6 +140,7 @@ public class Sound {
         if (soundPool != null && streamId >= 0) {
             soundPool.stop(streamId);
             streamId = -1;
+            playing = false;
             Log.d(TAG, "Sound stopped: " + name);
         }
     }
@@ -158,6 +161,7 @@ public class Sound {
     public void pause() {
         if (soundPool != null && streamId >= 0) {
             soundPool.pause(streamId);
+            playing = false;
             Log.d(TAG, "Sound paused: " + name);
         }
     }
@@ -168,6 +172,7 @@ public class Sound {
     public void resume() {
         if (soundPool != null && streamId >= 0) {
             soundPool.resume(streamId);
+            playing = true;
             Log.d(TAG, "Sound resumed: " + name);
         }
     }
@@ -222,10 +227,7 @@ public class Sound {
      * Check if the sound is playing
      */
     public boolean isPlaying() {
-        if (soundPool == null || streamId < 0) {
-            return false;
-        }
-        return soundPool.getStreamVolume(streamId) > 0;
+        return soundPool != null && streamId > 0 && playing;
     }
     
     // Getters and setters

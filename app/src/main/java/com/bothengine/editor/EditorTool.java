@@ -6,13 +6,26 @@ package com.bothengine.editor;
  * Similar to Unity's Tool class
  */
 public abstract class EditorTool {
-    public static final int SELECT = 0;
-    public static final int MOVE = 1;
-    public static final int ROTATE = 2;
-    public static final int SCALE = 3;
-    public static final int RECTANGLE = 4;
-    public static final int CIRCLE = 5;
-    public static final int BRUSH = 6;
+    /**
+     * The tools the editor can activate.
+     */
+    public enum Type {
+        SELECT,
+        MOVE,
+        ROTATE,
+        SCALE,
+        RECTANGLE,
+        CIRCLE,
+        BRUSH
+    }
+
+    public static final Type SELECT = Type.SELECT;
+    public static final Type MOVE = Type.MOVE;
+    public static final Type ROTATE = Type.ROTATE;
+    public static final Type SCALE = Type.SCALE;
+    public static final Type RECTANGLE = Type.RECTANGLE;
+    public static final Type CIRCLE = Type.CIRCLE;
+    public static final Type BRUSH = Type.BRUSH;
     
     private String name;
     private int iconId;

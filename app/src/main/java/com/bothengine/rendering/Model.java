@@ -66,6 +66,10 @@ public class Model {
     /**
      * Get material by index
      */
+    public Material getMaterial() {
+        return materials.isEmpty() ? null : materials.get(0);
+    }
+
     public Material getMaterial(int index) {
         if (index >= 0 && index < materials.size()) {
             return materials.get(index);

@@ -6,6 +6,8 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.bothengine.core.EngineConfig;
+import com.bothengine.rendering.Vector2;
+import com.bothengine.rendering.Vector3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -351,6 +353,20 @@ public class InputManager implements View.OnTouchListener, View.OnKeyListener {
     
     // Key input methods
     
+    /**
+     * True while Shift is held (used for multi-select in the editor).
+     */
+    public boolean isShiftDown() {
+        return isKeyDown(KeyEvent.KEYCODE_SHIFT_LEFT) || isKeyDown(KeyEvent.KEYCODE_SHIFT_RIGHT);
+    }
+
+    /**
+     * True while Ctrl is held (used for multi-select in the editor).
+     */
+    public boolean isControlDown() {
+        return isKeyDown(KeyEvent.KEYCODE_CTRL_LEFT) || isKeyDown(KeyEvent.KEYCODE_CTRL_RIGHT);
+    }
+
     public boolean isKeyDown(int keyCode) {
         return keysDown.containsKey(keyCode);
     }

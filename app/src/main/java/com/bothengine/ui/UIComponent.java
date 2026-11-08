@@ -13,7 +13,8 @@ public abstract class UIComponent extends Component {
     protected boolean interactable;
     protected int renderOrder;
     protected RectTransform rectTransform;
-    protected Canvas canvas;
+    /** Engine-level canvas that owns this component (may be null). */
+    protected com.bothengine.ui.Canvas uiCanvas;
     protected Entity entity;
 
     public UIComponent() {
@@ -92,9 +93,7 @@ public abstract class UIComponent extends Component {
 
     public void setRenderOrder(int renderOrder) {
         this.renderOrder = renderOrder;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public RectTransform getRectTransform() {
@@ -105,12 +104,22 @@ public abstract class UIComponent extends Component {
         this.rectTransform = rectTransform;
     }
 
-    public Canvas getCanvas() {
-        return canvas;
+    public com.bothengine.ui.Canvas getUiCanvas() {
+        return uiCanvas;
     }
 
-    public void setCanvas(Canvas canvas) {
-        this.canvas = canvas;
+    public void setCanvas(com.bothengine.ui.Canvas canvas) {
+        this.uiCanvas = canvas;
+    }
+
+    /**
+     * Mark the owning canvas dirty so it re-sorts and redraws.
+     * Safe to call when the component is not attached to a canvas.
+     */
+    protected void notifyChanged() {
+        if (uiCanvas != null) {
+            uiCanvas.markDirty();
+        }
     }
 
     public Entity getEntity() {

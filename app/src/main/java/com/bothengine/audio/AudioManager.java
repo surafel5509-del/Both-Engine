@@ -3,7 +3,6 @@ package com.bothengine.audio;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
@@ -91,7 +90,7 @@ public class AudioManager {
                 .setAudioAttributes(audioAttributes)
                 .build();
         } else {
-            soundPool = new SoundPool(maxSoundSources, AudioManager.STREAM_MUSIC, 0);
+            soundPool = new SoundPool(maxSoundSources, android.media.AudioManager.STREAM_MUSIC, 0);
         }
         
         soundPool.setOnLoadCompleteListener((soundPool, sampleId, status) -> {
@@ -191,7 +190,8 @@ public class AudioManager {
         if (mediaPlayer == null) return null;
         
         mediaPlayer.setLooping(loop);
-        mediaPlayer.setVolume(masterVolume * musicVolume);
+        float musicGain = masterVolume * musicVolume;
+        mediaPlayer.setVolume(musicGain, musicGain);
         
         AudioSource source = new AudioSource(name, mediaPlayer, AudioSourceType.MUSIC);
         source.setLoop(loop);

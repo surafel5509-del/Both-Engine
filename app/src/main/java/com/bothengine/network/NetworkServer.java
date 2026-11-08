@@ -75,7 +75,7 @@ public class NetworkServer {
             
             // Fire server started event
             if (manager != null) {
-                manager.fireEvent(new NetworkEvent(NetworkEventType.SERVER_STARTED, -1));
+                manager.fireEvent(new NetworkEvent(NetworkEvent.NetworkEventType.SERVER_STARTED, -1));
             }
             
         } catch (IOException e) {
@@ -117,7 +117,7 @@ public class NetworkServer {
             
             // Fire server stopped event
             if (manager != null) {
-                manager.fireEvent(new NetworkEvent(NetworkEventType.SERVER_STOPPED, -1));
+                manager.fireEvent(new NetworkEvent(NetworkEvent.NetworkEventType.SERVER_STOPPED, -1));
             }
             
         } catch (IOException e) {
@@ -174,7 +174,7 @@ public class NetworkServer {
         }
         
         // Create spawn message
-        NetworkMessage spawnMessage = new NetworkMessage(NetworkMessageType.SPAWN);
+        NetworkMessage spawnMessage = new NetworkMessage(NetworkMessage.NetworkMessageType.SPAWN);
         spawnMessage.writeInt(identity.getNetId());
         spawnMessage.writeString(identity.getPrefabName());
         spawnMessage.writeInt(identity.getOwnerId());
@@ -190,7 +190,7 @@ public class NetworkServer {
      */
     public void destroyIdentity(int netId) {
         // Create destroy message
-        NetworkMessage destroyMessage = new NetworkMessage(NetworkMessageType.DESTROY);
+        NetworkMessage destroyMessage = new NetworkMessage(NetworkMessage.NetworkMessageType.DESTROY);
         destroyMessage.writeInt(netId);
         
         // Send to all clients
@@ -330,7 +330,7 @@ public class NetworkServer {
         public void handleConnection() {
             try {
                 // Send connection ID to client
-                NetworkMessage connectMessage = new NetworkMessage(NetworkMessageType.CONNECT);
+                NetworkMessage connectMessage = new NetworkMessage(NetworkMessage.NetworkMessageType.CONNECT);
                 connectMessage.writeInt(connectionId);
                 sendMessage(connectMessage);
                 
@@ -362,17 +362,17 @@ public class NetworkServer {
             if (message == null) return;
             
             switch (message.getType()) {
-                case NetworkMessageType.DISCONNECT:
+                case NetworkMessage.NetworkMessageType.DISCONNECT:
                     disconnect();
                     break;
                     
-                case NetworkMessageType.PING:
+                case NetworkMessage.NetworkMessageType.PING:
                     // Send pong back
-                    NetworkMessage pongMessage = new NetworkMessage(NetworkMessageType.PONG);
+                    NetworkMessage pongMessage = new NetworkMessage(NetworkMessage.NetworkMessageType.PONG);
                     sendMessage(pongMessage);
                     break;
                     
-                case NetworkMessageType.STATE_UPDATE:
+                case NetworkMessage.NetworkMessageType.STATE_UPDATE:
                     // Forward to all other clients
                     int netId = message.readInt();
                     if (server != null) {
@@ -380,7 +380,7 @@ public class NetworkServer {
                     }
                     break;
                     
-                case NetworkMessageType.RPC:
+                case NetworkMessage.NetworkMessageType.RPC:
                     // Forward to all other clients
                     if (server != null) {
                         server.sendToAll(message);

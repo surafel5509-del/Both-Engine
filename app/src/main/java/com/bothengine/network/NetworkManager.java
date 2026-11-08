@@ -2,6 +2,8 @@ package com.bothengine.network;
 
 import android.util.Log;
 
+import com.bothengine.core.ecs.Entity;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -226,6 +228,19 @@ public class NetworkManager {
     /**
      * Get a network identity by netId
      */
+    /**
+     * Find the network identity attached to an entity, if any.
+     */
+    public NetworkIdentity getNetworkIdentity(Entity entity) {
+        if (entity == null) return null;
+        for (NetworkIdentity identity : networkIdentities.values()) {
+            if (entity.equals(identity.getEntity())) {
+                return identity;
+            }
+        }
+        return null;
+    }
+
     public NetworkIdentity getIdentity(int netId) {
         return networkIdentities.get(netId);
     }
@@ -318,7 +333,7 @@ public class NetworkManager {
         connections.put(connection.getConnectionId(), connection);
         
         // Fire connection event
-        fireEvent(new NetworkEvent(NetworkEventType.CLIENT_CONNECTED, connection.getConnectionId()));
+        fireEvent(new NetworkEvent(NetworkEvent.NetworkEventType.CLIENT_CONNECTED, connection.getConnectionId()));
     }
     
     /**
@@ -329,7 +344,7 @@ public class NetworkManager {
         
         if (connection != null) {
             // Fire disconnection event
-            fireEvent(new NetworkEvent(NetworkEventType.CLIENT_DISCONNECTED, connectionId));
+            fireEvent(new NetworkEvent(NetworkEvent.NetworkEventType.CLIENT_DISCONNECTED, connectionId));
         }
     }
     

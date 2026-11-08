@@ -14,9 +14,35 @@ public class Frustum {
     
     private final Plane[] planes;
     
+    public Frustum() {
+        this.planes = new Plane[6];
+        for (int i = 0; i < planes.length; i++) {
+            planes[i] = new Plane(0, 0, 1, 0);
+        }
+    }
+
     public Frustum(Matrix4 viewProjectionMatrix) {
         this.planes = new Plane[6];
         extractPlanes(viewProjectionMatrix);
+    }
+
+    /**
+     * Re-extract the six clipping planes from a view-projection matrix.
+     */
+    public void extractFromMatrix(Matrix4 viewProjectionMatrix) {
+        extractPlanes(viewProjectionMatrix);
+    }
+
+    public boolean contains(Vector3 point) {
+        return containsPoint(point);
+    }
+
+    public boolean intersects(Bounds bounds) {
+        return containsBounds(bounds);
+    }
+
+    public boolean intersectsSphere(Vector3 center, float radius) {
+        return containsSphere(center, radius);
     }
     
     /**

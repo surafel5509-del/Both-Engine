@@ -1,5 +1,6 @@
 package com.bothengine.rendering;
 
+import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
 
@@ -23,6 +24,10 @@ public class Renderer implements GLSurfaceView.Renderer {
     private float fixedDeltaTime = 1.0f / 60.0f;
     private float accumulator;
     private boolean gameRunning = true;
+    private int framesRendered;
+    private final SceneRenderer sceneRenderer = new SceneRenderer();
+    private int surfaceWidth = 1;
+    private int surfaceHeight = 1;
     
     public Renderer(EngineConfig config) {
         this.config = config;
@@ -37,11 +42,14 @@ public class Renderer implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         try {
-            Log.i(TAG, "Surface created");
+            Log.i(TAG, "Surface created (GL thread alive)");
             
             // Initialize OpenGL
             GLES20Helper.initialize(gl);
-            
+
+            // Build the default scene so the very first frame has content.
+            sceneRenderer.initialize();
+
             // Clear screen
             clearScreen(gl);
             
@@ -61,6 +69,9 @@ public class Renderer implements GLSurfaceView.Renderer {
         try {
             Log.i(TAG, "Surface changed: " + width + "x" + height);
             
+            surfaceWidth = width;
+            surfaceHeight = height;
+
             // Set viewport
             gl.glViewport(0, 0, width, height);
             
@@ -104,12 +115,17 @@ public class Renderer implements GLSurfaceView.Renderer {
                 accumulator -= fixedDeltaTime;
             }
             
-            // Clear screen
-            clearScreen(gl);
+            // Draw the default scene (gradient background + spinning cube).
+            sceneRenderer.drawFrame(deltaTime, surfaceWidth, surfaceHeight);
             
             // Variable update and render
             if (engine != null) {
                 engine.update();
+            }
+
+            framesRendered++;
+            if (framesRendered == 1 || framesRendered % 300 == 0) {
+                Log.i(TAG, "Rendering frame " + framesRendered);
             }
         } catch (Exception e) {
             Log.e(TAG, "Error in onDrawFrame: " + e.getMessage(), e);
@@ -129,6 +145,38 @@ public class Renderer implements GLSurfaceView.Renderer {
         }
     }
     
+    /**
+     * Release renderer state.
+     */
+    public void shutdown() {
+        gameRunning = false;
+        engine = null;
+        sceneRenderer.release();
+        Log.i(TAG, "Renderer shutdown");
+    }
+
+    /** Whether the default scene compiled and is drawing. */
+    public boolean isSceneReady() {
+        return sceneRenderer.isReady();
+    }
+
+    /**
+     * Clear the colour/depth buffers of the current surface.
+     */
+    public void clearScreen() {
+        GLES20.glClearColor(0f, 0f, 0f, 1f);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+    }
+
+    /**
+     * Advance and render one frame from outside onDrawFrame.
+     */
+    public void render(float deltaTime) {
+        if (engine != null) {
+            engine.update(deltaTime);
+        }
+    }
+
     public void setGameRunning(boolean running) {
         this.gameRunning = running;
     }

@@ -1,7 +1,7 @@
 package com.bothengine.animation;
 
 import com.bothengine.rendering.Vector3;
-import com.bothengine.rendering.Quaternion;
+import com.bothengine.components.Quaternion;
 import com.bothengine.rendering.Matrix4;
 
 import java.util.ArrayList;
@@ -122,7 +122,7 @@ public class SkeletalAnimation {
         if (rootBone == null) return;
         
         // Update bone transformations
-        updateBoneTransforms(rootBone, Matrix4.identity());
+        updateBoneTransforms(rootBone, Matrix4.createIdentity());
         
         // Store current pose
         for (int i = 0; i < boneCount; i++) {
@@ -136,7 +136,7 @@ public class SkeletalAnimation {
      */
     private void updateBoneTransforms(Bone bone, Matrix4 parentTransform) {
         // Compute local transformation
-        Matrix4 localTransform = Matrix4.identity();
+        Matrix4 localTransform = Matrix4.createIdentity();
         localTransform.translate(bone.getPosition());
         localTransform.rotate(bone.getRotation());
         localTransform.scale(bone.getScale());
@@ -213,7 +213,7 @@ public class SkeletalAnimation {
         if (boneIndex >= 0 && boneIndex < boneCount) {
             return inverseBindPoses[boneIndex];
         }
-        return Matrix4.identity();
+        return Matrix4.createIdentity();
     }
     
     /**
@@ -223,7 +223,7 @@ public class SkeletalAnimation {
         if (boneIndex >= 0 && boneIndex < boneCount) {
             return currentPose[boneIndex];
         }
-        return Matrix4.identity();
+        return Matrix4.createIdentity();
     }
     
     /**
@@ -233,7 +233,7 @@ public class SkeletalAnimation {
         if (boneIndex >= 0 && boneIndex < boneCount) {
             return Matrix4.multiply(getInverseBindPose(boneIndex), getCurrentPose(boneIndex));
         }
-        return Matrix4.identity();
+        return Matrix4.createIdentity();
     }
     
     /**
@@ -358,8 +358,8 @@ public class SkeletalAnimation {
             this.scale = new Vector3(1, 1, 1);
             this.parent = null;
             this.children = new ArrayList<>();
-            this.bindPoseMatrix = Matrix4.identity();
-            this.finalTransformation = Matrix4.identity();
+            this.bindPoseMatrix = Matrix4.createIdentity();
+            this.finalTransformation = Matrix4.createIdentity();
         }
         
         /**
@@ -403,7 +403,7 @@ public class SkeletalAnimation {
          * Compute the bind pose matrix
          */
         public Matrix4 getBindPoseMatrix() {
-            Matrix4 matrix = Matrix4.identity();
+            Matrix4 matrix = Matrix4.createIdentity();
             matrix.translate(position);
             matrix.rotate(rotation);
             matrix.scale(scale);

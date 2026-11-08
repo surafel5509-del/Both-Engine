@@ -1,7 +1,7 @@
 package com.bothengine.animation;
 
 import com.bothengine.rendering.Vector3;
-import com.bothengine.rendering.Quaternion;
+import com.bothengine.components.Quaternion;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -212,9 +212,9 @@ public class AnimationClip {
     /**
      * Generic keyframe sampling with linear interpolation
      */
-    private <T extends Keyframe> T sampleKeyframes(T[] keyframes, float time) {
+    private <T> T sampleKeyframes(Keyframe<T>[] keyframes, float time) {
         if (keyframes.length == 1) {
-            return keyframes[0];
+            return keyframes[0].value;
         }
         
         // Clamp time
@@ -231,7 +231,7 @@ public class AnimationClip {
         
         // If time is beyond last keyframe, return last keyframe
         if (index >= keyframes.length - 1) {
-            return keyframes[keyframes.length - 1];
+            return keyframes[keyframes.length - 1].value;
         }
         
         // Linear interpolation

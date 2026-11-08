@@ -78,7 +78,7 @@ public class EntitySerializer {
         // Serialize components
         for (Class<? extends Component> componentType : entity.getComponents().keySet()) {
             Component component = entity.getComponents().get(componentType);
-            ComponentSerializer<?> serializer = getSerializer(componentType);
+            ComponentSerializer serializer = getSerializer(componentType);
             if (serializer != null) {
                 String serialized = serializer.serialize(component);
                 data.components.put(componentType.getName(), serialized);

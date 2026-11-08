@@ -11,13 +11,14 @@ import java.util.UUID;
  */
 public class Entity {
     private final String id;
-    private final String name;
+    private String name;
     private final Map<Class<? extends Component>, Component> components;
     private boolean active;
     private boolean visible;
     private Entity parent;
     private int layer;
     private int zIndex;
+    private EntityManager entityManager;
     
     public Entity(String name) {
         this.id = UUID.randomUUID().toString();
@@ -34,6 +35,14 @@ public class Entity {
         this("Entity");
     }
     
+    public EntityManager getEntityManager() {
+        return entityManager;
+    }
+
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
     public String getId() {
         return id;
     }

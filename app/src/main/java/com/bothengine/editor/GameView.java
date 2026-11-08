@@ -72,7 +72,13 @@ public class GameView extends EditorWindow {
         if (engine != null && engine.isPlaying()) {
             // In play mode, use the active game camera
             if (engine.getSceneManager() != null && engine.getSceneManager().getCurrentScene() != null) {
-                gameCamera = engine.getSceneManager().getCurrentScene().getMainCamera();
+                com.bothengine.core.ecs.Entity mainCameraEntity =
+                        engine.getSceneManager().getCurrentScene().getMainCamera();
+                if (mainCameraEntity != null) {
+                    com.bothengine.components.CameraComponent cameraComponent =
+                            mainCameraEntity.getComponent(com.bothengine.components.CameraComponent.class);
+                    gameCamera = cameraComponent != null ? cameraComponent.getCamera() : null;
+                }
             }
         } else {
             // In edit mode, use the editor camera

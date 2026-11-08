@@ -459,6 +459,13 @@ public class PrimitiveMesh {
     /**
      * Create a simple quad mesh
      */
+    /**
+     * Create a line-list mesh from an arbitrary vertex array.
+     */
+    public static Mesh createLines(String name, float[] vertices, short[] indices) {
+        return Mesh.createWithIndices(name, vertices, indices);
+    }
+
     public static Mesh createQuad() {
         Mesh mesh = new Mesh("Quad");
         

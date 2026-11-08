@@ -3,7 +3,7 @@ package com.bothengine.components;
 import com.bothengine.core.ecs.Component;
 import com.bothengine.rendering.Matrix4;
 import com.bothengine.rendering.Vector3;
-import com.bothengine.rendering.Quaternion;
+import com.bothengine.components.Quaternion;
 
 /**
  * TransformComponent
@@ -56,7 +56,7 @@ public class TransformComponent extends Component {
     private void updateMatrix() {
         if (!dirty) return;
         
-        worldMatrix = Matrix4.identity();
+        worldMatrix = Matrix4.createIdentity();
         worldMatrix.translate(position);
         worldMatrix.rotate(rotation);
         worldMatrix.scale(scale);
@@ -196,7 +196,10 @@ public class TransformComponent extends Component {
     // Scale methods
     
     public void scale(Vector3 scale) {
-        this.scale = this.scale.multiply(scale);
+        this.scale = new Vector3(
+                this.scale.x * scale.x,
+                this.scale.y * scale.y,
+                this.scale.z * scale.z);
         setDirty();
     }
     

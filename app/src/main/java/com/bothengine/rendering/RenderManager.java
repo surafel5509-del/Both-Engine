@@ -4,6 +4,7 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
 
+import com.bothengine.core.Engine;
 import com.bothengine.core.EngineConfig;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -77,8 +78,8 @@ public class RenderManager {
             glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
             
             // Create cameras
-            this.mainCamera = new Camera(CameraType.PERSPECTIVE);
-            this.uiCamera = new Camera(CameraType.ORTHOGRAPHIC);
+            this.mainCamera = new Camera(Camera.CameraType.PERSPECTIVE);
+            this.uiCamera = new Camera(Camera.CameraType.ORTHOGRAPHIC);
             
             Log.i(TAG, "RenderManager initialized with GLSurfaceView");
         } catch (Exception e) {
@@ -240,67 +241,4 @@ public class RenderManager {
         Log.i(TAG, "RenderManager shutdown");
     }
     
-    /**
-     * Renderer class for OpenGL ES rendering
-     */
-    private static class Renderer implements GLSurfaceView.Renderer {
-        private final EngineConfig config;
-        private boolean initialized;
-        
-        public Renderer(EngineConfig config) {
-            this.config = config;
-            this.initialized = false;
-        }
-        
-        @Override
-        public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-            // Initialize OpenGL ES
-            initializeOpenGL();
-            initialized = true;
-            Log.i(TAG, "OpenGL ES surface created");
-        }
-        
-        @Override
-        public void onSurfaceChanged(GL10 gl, int width, int height) {
-            // Handle viewport changes
-            gl.glViewport(0, 0, width, height);
-            Log.i(TAG, "OpenGL ES surface changed: " + width + "x" + height);
-        }
-        
-        @Override
-        public void onDrawFrame(GL10 gl) {
-            if (!initialized) return;
-            
-            // Clear the screen
-            clearScreen();
-            
-            // Render all objects
-            render(0);
-        }
-        
-        private void initializeOpenGL() {
-            // Enable depth testing
-            GLES20Helper.enableDepthTesting(true);
-            
-            // Enable culling
-            GLES20Helper.enableCulling(true);
-            
-            // Enable blending
-            GLES20Helper.enableBlending(true);
-            
-            Log.i(TAG, "OpenGL ES initialized");
-        }
-        
-        public void clearScreen() {
-            GLES20Helper.clearScreen();
-        }
-        
-        public void render(float deltaTime) {
-            // Render logic will be implemented in the main render method
-        }
-        
-        public void shutdown() {
-            initialized = false;
-        }
-    }
 }

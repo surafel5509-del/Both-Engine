@@ -24,7 +24,7 @@ public class FrustumCulling {
     public FrustumCulling() {
         this.frustum = null;
         this.camera = null;
-        this.viewProjectionMatrix = Matrix4.identity();
+        this.viewProjectionMatrix = Matrix4.createIdentity();
         this.enabled = true;
     }
     
@@ -108,7 +108,8 @@ public class FrustumCulling {
         int visibleCount = 0;
         
         for (Object obj : objects) {
-            Bounds bounds = boundsGetter.getBounds(obj);
+            @SuppressWarnings("unchecked")
+            Bounds bounds = ((BoundsGetter<Object>) boundsGetter).getBounds(obj);
             if (isVisible(bounds)) {
                 visibleCount++;
             }

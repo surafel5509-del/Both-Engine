@@ -2,7 +2,7 @@ package com.bothengine.editor;
 
 import com.bothengine.components.CameraComponent;
 import com.bothengine.components.ColliderComponent;
-import com.bothengine.components.Component;
+import com.bothengine.core.ecs.Component;
 import com.bothengine.components.LightComponent;
 import com.bothengine.components.MeshRendererComponent;
 import com.bothengine.components.RigidbodyComponent;

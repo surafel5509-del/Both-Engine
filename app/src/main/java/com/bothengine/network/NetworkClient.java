@@ -100,7 +100,7 @@ public class NetworkClient {
             
             // Fire connection event
             if (manager != null) {
-                manager.fireEvent(new NetworkEvent(NetworkEventType.CONNECTED, -1));
+                manager.fireEvent(new NetworkEvent(NetworkEvent.NetworkEventType.CONNECTED, -1));
             }
             
         } catch (IOException e) {
@@ -109,7 +109,7 @@ public class NetworkClient {
             
             // Fire connection failed event
             if (manager != null) {
-                manager.fireEvent(new NetworkEvent(NetworkEventType.CONNECT_FAILED, -1));
+                manager.fireEvent(new NetworkEvent(NetworkEvent.NetworkEventType.CONNECT_FAILED, -1));
             }
         }
     }
@@ -127,7 +127,7 @@ public class NetworkClient {
         try {
             if (outputStream != null) {
                 // Send disconnect message
-                NetworkMessage disconnectMessage = new NetworkMessage(NetworkMessageType.DISCONNECT);
+                NetworkMessage disconnectMessage = new NetworkMessage(NetworkMessage.NetworkMessageType.DISCONNECT);
                 sendMessage(disconnectMessage);
             }
             
@@ -159,7 +159,7 @@ public class NetworkClient {
             
             // Fire disconnection event
             if (manager != null) {
-                manager.fireEvent(new NetworkEvent(NetworkEventType.DISCONNECTED, -1));
+                manager.fireEvent(new NetworkEvent(NetworkEvent.NetworkEventType.DISCONNECTED, -1));
             }
             
         } catch (IOException e) {
@@ -199,44 +199,44 @@ public class NetworkClient {
         if (message == null) return;
         
         switch (message.getType()) {
-            case NetworkMessageType.CONNECT:
+            case NetworkMessage.NetworkMessageType.CONNECT:
                 // Server assigned our connection ID
                 connectionId = message.readInt();
                 Log.i(TAG, "Server assigned connection ID: " + connectionId);
                 break;
                 
-            case NetworkMessageType.DISCONNECT:
+            case NetworkMessage.NetworkMessageType.DISCONNECT:
                 disconnect();
                 break;
                 
-            case NetworkMessageType.PING:
+            case NetworkMessage.NetworkMessageType.PING:
                 // Send pong back
                 sendPong();
                 break;
                 
-            case NetworkMessageType.PONG:
+            case NetworkMessage.NetworkMessageType.PONG:
                 // Calculate ping
                 long currentTime = System.currentTimeMillis();
                 ping = (int) (currentTime - lastPingTime);
                 lastPongTime = currentTime;
                 break;
                 
-            case NetworkMessageType.SPAWN:
+            case NetworkMessage.NetworkMessageType.SPAWN:
                 // Handle spawn message
                 handleSpawnMessage(message);
                 break;
                 
-            case NetworkMessageType.DESTROY:
+            case NetworkMessage.NetworkMessageType.DESTROY:
                 // Handle destroy message
                 handleDestroyMessage(message);
                 break;
                 
-            case NetworkMessageType.STATE_UPDATE:
+            case NetworkMessage.NetworkMessageType.STATE_UPDATE:
                 // Handle state update message
                 handleStateUpdateMessage(message);
                 break;
                 
-            case NetworkMessageType.RPC:
+            case NetworkMessage.NetworkMessageType.RPC:
                 // Handle RPC message
                 handleRpcMessage(message);
                 break;
@@ -362,7 +362,7 @@ public class NetworkClient {
     public void sendPing() {
         if (state != ConnectionState.CONNECTED) return;
         
-        NetworkMessage pingMessage = new NetworkMessage(NetworkMessageType.PING);
+        NetworkMessage pingMessage = new NetworkMessage(NetworkMessage.NetworkMessageType.PING);
         sendMessage(pingMessage);
         lastPingTime = System.currentTimeMillis();
     }
@@ -371,7 +371,7 @@ public class NetworkClient {
      * Send a pong to the server
      */
     private void sendPong() {
-        NetworkMessage pongMessage = new NetworkMessage(NetworkMessageType.PONG);
+        NetworkMessage pongMessage = new NetworkMessage(NetworkMessage.NetworkMessageType.PONG);
         sendMessage(pongMessage);
     }
     

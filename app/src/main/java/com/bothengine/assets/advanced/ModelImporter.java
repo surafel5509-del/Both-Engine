@@ -2,7 +2,6 @@ package com.bothengine.assets.advanced;
 
 import com.bothengine.rendering.Mesh;
 import com.bothengine.rendering.Model;
-import com.bothengine.rendering.VertexData;
 
 import java.io.BufferedReader;
 import java.io.File;

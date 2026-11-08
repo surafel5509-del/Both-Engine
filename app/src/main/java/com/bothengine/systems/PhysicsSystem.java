@@ -60,6 +60,13 @@ public class PhysicsSystem {
     /**
      * Update physics (variable time step)
      */
+    /**
+     * Entities currently tracked by the physics system.
+     */
+    public java.util.List<Entity> getAllEntities() {
+        return entityManager != null ? entityManager.getEntities() : new java.util.ArrayList<>();
+    }
+
     public void update(float deltaTime) {
         if (!enabled || entityManager == null) return;
         
@@ -212,10 +219,19 @@ public class PhysicsSystem {
         float tmin = 0;
         float tmax = Float.POSITIVE_INFINITY;
         
+        float[] d0 = {origin.x, origin.y, origin.z};
+        float[] d1 = {direction.x, direction.y, direction.z};
+        float[] lo = {min.x, min.y, min.z};
+        float[] hi = {max.x, max.y, max.z};
         for (int i = 0; i < 3; i++) {
-            float invD = 1.0f / direction.data[i];
-            float t1 = (min.data[i] - origin.data[i]) * invD;
-            float t2 = (max.data[i] - origin.data[i]) * invD;
+            if (Math.abs(d1[i]) < 1e-6f) {
+                // Ray is parallel to this slab: no hit if the origin is outside it.
+                if (d0[i] < lo[i] || d0[i] > hi[i]) return false;
+                continue;
+            }
+            float invD = 1.0f / d1[i];
+            float t1 = (lo[i] - d0[i]) * invD;
+            float t2 = (hi[i] - d0[i]) * invD;
             
             tmin = Math.max(tmin, Math.min(t1, t2));
             tmax = Math.min(tmax, Math.max(t1, t2));

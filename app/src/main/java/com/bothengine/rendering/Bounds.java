@@ -23,11 +23,13 @@ public class Bounds {
         updateCenterAndSize();
     }
     
-    public Bounds(Vector3 center, Vector3 size) {
-        this.center = new Vector3(center);
-        this.size = new Vector3(size);
-        this.min = Vector3.subtract(center, Vector3.multiply(size, 0.5f));
-        this.max = Vector3.add(center, Vector3.multiply(size, 0.5f));
+    public static Bounds fromCenterAndSize(Vector3 center, Vector3 size) {
+        Bounds bounds = new Bounds();
+        bounds.center = new Vector3(center);
+        bounds.size = new Vector3(size);
+        bounds.min = Vector3.subtract(center, Vector3.multiply(size, 0.5f));
+        bounds.max = Vector3.add(center, Vector3.multiply(size, 0.5f));
+        return bounds;
     }
     
     /**
@@ -122,6 +124,33 @@ public class Bounds {
     /**
      * Expand this bounds to include a point
      */
+    /**
+     * Slab test: does the ray from {@code origin} along {@code direction} hit these bounds
+     * within {@code maxDistance}?
+     */
+    public boolean intersectsRay(Vector3 origin, Vector3 direction, float maxDistance) {
+        float tmin = 0f;
+        float tmax = maxDistance > 0 ? maxDistance : Float.POSITIVE_INFINITY;
+        float[] o = {origin.x, origin.y, origin.z};
+        float[] d = {direction.x, direction.y, direction.z};
+        float[] lo = {min.x, min.y, min.z};
+        float[] hi = {max.x, max.y, max.z};
+
+        for (int i = 0; i < 3; i++) {
+            if (Math.abs(d[i]) < 1e-6f) {
+                if (o[i] < lo[i] || o[i] > hi[i]) return false;
+                continue;
+            }
+            float inv = 1f / d[i];
+            float t1 = (lo[i] - o[i]) * inv;
+            float t2 = (hi[i] - o[i]) * inv;
+            tmin = Math.max(tmin, Math.min(t1, t2));
+            tmax = Math.min(tmax, Math.max(t1, t2));
+            if (tmin > tmax) return false;
+        }
+        return true;
+    }
+
     public void expand(Vector3 point) {
         min.x = Math.min(min.x, point.x);
         min.y = Math.min(min.y, point.y);

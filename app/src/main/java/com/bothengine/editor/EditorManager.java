@@ -40,7 +40,7 @@ public class EditorManager {
     private EditorManager() {
         this.windows = new ArrayList<>();
         this.focusedWindow = null;
-        this.currentTool = EditorTool.SELECT;
+        this.currentTool = createTool(EditorTool.SELECT);
         this.isPlaying = false;
         this.isPaused = false;
         this.isEditing = true;
@@ -64,7 +64,7 @@ public class EditorManager {
     public void initialize(Engine engine) {
         this.engine = engine;
         this.sceneManager = engine.getSceneManager();
-        this.entityManager = engine.getEntityManager();
+        this.entityManager = engine.getSceneManager().getEntityManager();
         
         // Create default editor camera
         this.editorCamera = new EditorCamera();
@@ -163,15 +163,33 @@ public class EditorManager {
     /**
      * Set the current tool
      */
-    public void setCurrentTool(EditorTool tool) {
+    public void setCurrentTool(EditorTool.Type tool) {
         if (currentTool != null) {
             currentTool.onDisable();
         }
-        
-        currentTool = tool;
-        
+
+        currentTool = createTool(tool);
+
         if (currentTool != null) {
             currentTool.onEnable();
+        }
+    }
+
+    /**
+     * Instantiate the concrete tool implementation for a tool type.
+     */
+    private static EditorTool createTool(EditorTool.Type type) {
+        if (type == null) return null;
+        switch (type) {
+            case MOVE:
+                return new EditorTool.MoveTool();
+            case ROTATE:
+                return new EditorTool.RotateTool();
+            case SCALE:
+                return new EditorTool.ScaleTool();
+            case SELECT:
+            default:
+                return new EditorTool.SelectTool();
         }
     }
     
@@ -266,7 +284,7 @@ public class EditorManager {
      */
     public void clearSelection() {
         for (EditorWindow window : windows) {
-            window.onSelectionChanged(null);
+            window.onSelectionChanged((Entity) null);
         }
     }
     
@@ -325,6 +343,13 @@ public class EditorManager {
     
     // Getters and setters
     
+    /**
+     * Input state used by the editor windows (may be null before initialize()).
+     */
+    public com.bothengine.input.InputManager getInput() {
+        return engine != null ? engine.getInputManager() : null;
+    }
+
     public Engine getEngine() {
         return engine;
     }

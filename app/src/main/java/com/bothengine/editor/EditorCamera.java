@@ -2,7 +2,7 @@ package com.bothengine.editor;
 
 import com.bothengine.rendering.Camera;
 import com.bothengine.rendering.Vector3;
-import com.bothengine.rendering.Quaternion;
+import com.bothengine.components.Quaternion;
 import com.bothengine.rendering.Matrix4;
 
 /**
@@ -182,7 +182,7 @@ public class EditorCamera {
      */
     private void updateFirstPersonCamera() {
         // Calculate camera rotation from euler angles
-        Quaternion rotation = Quaternion.euler(eulerAngles.x, eulerAngles.y, eulerAngles.z);
+        Quaternion rotation = Quaternion.fromEuler(eulerAngles.x, eulerAngles.y, eulerAngles.z);
         
         // Calculate forward vector
         Vector3 forward = rotation.getForward();

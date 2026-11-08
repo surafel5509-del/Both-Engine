@@ -37,11 +37,13 @@ public class NetworkBehaviour extends Component {
         super.onAddedToEntity();
         
         // Find NetworkIdentity component
-        if (getEntity() != null) {
-            networkIdentity = getEntity().getComponent(NetworkIdentity.class);
-            if (networkIdentity != null) {
-                networkIdentity.registerBehaviour(this);
-            }
+        // NetworkIdentity is a plain (non-ECS) object, so it is resolved through
+        // the network manager that owns it rather than through Entity components.
+        NetworkIdentity identity = NetworkManager.getInstance() != null
+                ? NetworkManager.getInstance().getNetworkIdentity(getEntity())
+                : null;
+        if (identity != null) {
+            setNetworkIdentity(identity);
         }
     }
     

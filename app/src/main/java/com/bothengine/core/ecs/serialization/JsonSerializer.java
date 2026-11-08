@@ -1,6 +1,7 @@
 package com.bothengine.core.ecs.serialization;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -48,14 +49,14 @@ public class JsonSerializer {
      * Deserialize JSON to a list
      */
     public static <T> List<T> fromJsonList(String json, Class<T> type) {
-        return GSON.fromJson(json, new ListTypeAdapter<>(type));
+        return GSON.fromJson(json, TypeToken.getParameterized(List.class, type).getType());
     }
     
     /**
      * Deserialize JSON to a map
      */
     public static <K, V> Map<K, V> fromJsonMap(String json, Class<K> keyType, Class<V> valueType) {
-        return GSON.fromJson(json, new MapTypeAdapter<>(keyType, valueType));
+        return GSON.fromJson(json, TypeToken.getParameterized(Map.class, keyType, valueType).getType());
     }
     
     /**

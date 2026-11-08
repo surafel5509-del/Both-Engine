@@ -1,5 +1,21 @@
 // Both Engine - Professional Game Engine
 // Settings file for multi-module project
 
-include ':app'
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
 rootProject.name = "Both-Engine"
+include ':app'
