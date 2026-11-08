@@ -172,6 +172,14 @@ test_apk() {
   summary "Screen: $distinct distinct colours, $bright% non-black, **$warm% warm (scene content)**."
   printf '%s\n' "$colours" | sed -n '/^preview:/,$p' | sed 's/^/    /' >> "$SUMMARY" || true
 
+  # The job log lives on a host that is not always reachable, so publish a
+  # compact view of the actual framebuffer as an annotation too.
+  local preview
+  preview="$(printf '%s\n' "$colours" | sed -n '/^preview:/,$p' | sed '1d' | tr -d '\n' | tr -d '|')"
+  if [ -n "$preview" ]; then
+    annotate notice "Framebuffer-$label" "$preview"
+  fi
+
   if [ "$distinct" -lt 8 ] || [ "$bright" -lt 3 ]; then
     annotate error "Black-screen-$label" \
       "Screen is effectively blank ($distinct colours, $bright% non-black pixels)"
