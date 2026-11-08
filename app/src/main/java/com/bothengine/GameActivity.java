@@ -10,8 +10,7 @@ import android.view.WindowManager;
 import com.bothengine.core.Engine;
 import com.bothengine.core.EngineConfig;
 import com.bothengine.core.EngineApplication;
-
-
+import com.bothengine.rendering.RenderManager;
 
 /**
  * GameActivity
@@ -205,8 +204,6 @@ public class GameActivity extends Activity {
             glSurfaceView = null;
         }
     }
-    
-
     
     /**
      * Update the game - called from engine update loop
