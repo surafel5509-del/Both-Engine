@@ -48,17 +48,31 @@ jobs:
       - name: Report result
         if: always()
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           OUT=/tmp/report.txt
-          { echo "EXIT: ${{ steps.build.outputs.exit }}"; echo "=== ENV ==="; cat /tmp/env.txt; echo "=== BUILD (tail) ==="; tail -n 400 /tmp/build.log 2>/dev/null; } > $OUT
-          head -c 60000 $OUT > /tmp/report-trim.txt
-          python3 - <<'PY'
-          import json
-          body = open('/tmp/report-trim.txt').read()
-          json.dump({"body": "```\n" + body + "\n```"}, open('/tmp/comment.json','w'))
-          PY
-          gh api -X POST "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
-            --input /tmp/comment.json --jq '.id' || echo "comment failed"
-          tail -n 40 /tmp/build.log 2>/dev/null || true
+          {
+            echo "EXIT: ${{ steps.build.outputs.exit }}"
+            echo "=== ERROR COUNT: $(grep -c 'error:' /tmp/build.log 2>/dev/null) ==="
+            echo "=== UNIQUE ERRORS ==="
+            grep 'error:' /tmp/build.log 2>/dev/null | sed 's#/home/runner/work/Both-Engine/Both-Engine/##' | sort -u
+            echo "=== FAILURE LINES ==="
+            grep -E '^\* What went wrong|^> Task .* FAILED|^e: |^Caused by' -A3 /tmp/build.log 2>/dev/null | tail -n 60
+          } > $OUT
+
+          python3 - <<'PYEOF'
+          import json, subprocess, os
+          body = open('/tmp/report.txt', errors='replace').read()
+          chunks = [body[i:i+50000] for i in range(0, len(body), 50000)] or ['(empty report)']
+          repo = os.environ['GH_REPO']
+          sha = os.environ['GH_SHA']
+          for idx, c in enumerate(chunks[:12], 1):
+              payload = {"body": f"**[report {idx}/{len(chunks)}]**\n```\n{c}\n```"}
+              open('/tmp/c.json','w').write(json.dumps(payload))
+              subprocess.run(["gh","api","-X","POST",f"repos/{repo}/commits/{sha}/comments",
+                              "--input","/tmp/c.json","--jq",".id"], check=False)
+          print(f"posted {min(len(chunks),12)} chunk(s)")
+          PYEOF
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
