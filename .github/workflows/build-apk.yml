@@ -85,6 +85,14 @@ jobs:
           VERSION_NAME: ${{ steps.version.outputs.name }}
         run: |
           chmod +x gradlew
+          # Fetch the Gradle distribution up front and retry: downloading it
+          # inside the build made runs fail intermittently on a 10s timeout.
+          for attempt in 1 2 3; do
+            if ./gradlew --version > /dev/null 2>&1; then break; fi
+            echo "Gradle bootstrap attempt $attempt failed, retrying"
+            rm -rf "${HOME}/.gradle/wrapper/dists"/* 2>/dev/null || true
+            sleep 10
+          done
           set +e
           ./gradlew --no-daemon --stacktrace assembleDebug > build.log 2>&1
           status=$?
