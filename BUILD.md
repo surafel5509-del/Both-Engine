@@ -39,6 +39,52 @@ set PATH=%PATH%;%ANDROID_HOME%\tools
 set PATH=%PATH%;%ANDROID_HOME%\platform-tools
 ```
 
+## Building the APK with GitHub Actions (recommended)
+
+The repository ships with `.github/workflows/build-apk.yml`, so no local
+Android SDK is needed. Every push to `main`, `master` or a work branch builds a
+debug APK automatically.
+
+### Get the APK
+
+1. Open the **Actions** tab of the repository.
+2. Pick the latest **Build APK** run.
+3. Download the **BothEngine-debug-apk** artifact (retained for 30 days).
+
+The run summary also lists the version, commit, size and SHA-256 of the APK.
+
+### Trigger a build manually
+
+*Actions → Build APK → Run workflow*. Two optional inputs are available:
+
+| Input | Effect |
+| --- | --- |
+| `build_release` | Also builds a release APK |
+| `publish_release` | Builds both APKs and attaches them to a GitHub Release |
+
+### Release builds and signing
+
+Pushing a tag such as `v1.2.0` builds and publishes a release. To sign it,
+add these repository secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Purpose |
+| --- | --- |
+| `KEYSTORE_BASE64` | Base64 of your `.keystore` file (`base64 -w0 app.keystore`) |
+| `KEYSTORE_PASSWORD` | Keystore password |
+| `KEY_ALIAS` | Key alias |
+| `KEY_PASSWORD` | Key password |
+
+Without these secrets the release APK is signed with the debug key so it still
+installs on a device — rotate to a real key before publishing to the Play Store.
+
+### Install the artifact
+
+```bash
+adb install BothEngine-1.0.<build>.apk
+```
+
+Android 7.0 (API 24) or newer with OpenGL ES 2.0 is required.
+
 ## Building the APK
 
 ### Method 1: Using Android Studio (Recommended)

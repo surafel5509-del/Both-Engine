@@ -23,7 +23,6 @@ concurrency:
 
 permissions:
   contents: write
-  issues: write
 
 env:
   # Android SDK components the app needs.
@@ -114,48 +113,6 @@ jobs:
           path: build.log
           if-no-files-found: ignore
           retention-days: 7
-
-      - name: Publish diagnostics on failure
-        if: failure()
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          [ -f build.log ] || exit 0
-          {
-            echo "Automated diagnostics from workflow run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
-            echo ""
-            echo "Total compiler errors: $(grep -cE 'error: ' build.log)"
-            echo ""
-            echo '```'
-            # Raw compiler output (first error onward) keeps javac's symbol/location
-            # detail intact, which is what the fixes are derived from.
-            sed -n '/error: /,$p' build.log | head -n 1200 | cut -c1-500 || true
-            echo '```'
-          } > diagnostic-comment.md
-
-          # One rolling diagnostics issue, keyed by a ref so it stays reusable.
-          MARKER="<!-- bothengine-diagnostics:${GITHUB_REF_NAME} -->"
-          EXISTING="$(gh api --paginate "repos/${{ github.repository }}/issues?state=all&per_page=100" \
-            --jq ".[] | select(.body != null and (.body | contains(\"$MARKER\"))) | .number" 2>/dev/null | head -n1 || true)"
-
-          if [ -n "$EXISTING" ]; then
-            gh api -X POST "repos/${{ github.repository }}/issues/$EXISTING/comments" \
-              -f body="$(cat diagnostic-comment.md)" > /dev/null && echo "Diagnostics added to #$EXISTING"
-          else
-            {
-              echo "$MARKER"
-              echo ""
-              echo "## Both Engine build diagnostics"
-              echo ""
-              echo "Compiler/runtime failures reported by the APK workflow."
-              echo ""
-              cat diagnostic-comment.md
-            } > diagnostic-issue.md
-            gh issue create --repo "${{ github.repository }}" \
-              --title "Build diagnostics: ${GITHUB_SHA:0:7}" \
-              --body-file diagnostic-issue.md > /dev/null && echo "Diagnostics issue created"
-          fi
 
       - name: Run unit tests
         if: always()
