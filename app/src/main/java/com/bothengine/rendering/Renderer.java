@@ -1,5 +1,6 @@
 package com.bothengine.rendering;
 
+import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
 
@@ -129,6 +130,32 @@ public class Renderer implements GLSurfaceView.Renderer {
         }
     }
     
+    /**
+     * Release renderer state.
+     */
+    public void shutdown() {
+        gameRunning = false;
+        engine = null;
+        Log.i(TAG, "Renderer shutdown");
+    }
+
+    /**
+     * Clear the colour/depth buffers of the current surface.
+     */
+    public void clearScreen() {
+        GLES20.glClearColor(0f, 0f, 0f, 1f);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+    }
+
+    /**
+     * Advance and render one frame from outside onDrawFrame.
+     */
+    public void render(float deltaTime) {
+        if (engine != null) {
+            engine.update(deltaTime);
+        }
+    }
+
     public void setGameRunning(boolean running) {
         this.gameRunning = running;
     }

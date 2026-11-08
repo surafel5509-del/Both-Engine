@@ -44,8 +44,8 @@ public class Image extends UIComponent {
     private ColorFilter colorFilter;
     
     private Paint paint;
-    private Rect sourceRect;
-    private Rect destRect;
+    private RectF sourceRect;
+    private RectF destRect;
     private boolean preserveAspectRatio;
 
     public Image() {
@@ -168,8 +168,8 @@ public class Image extends UIComponent {
             float viewWidth = bounds.width();
             float viewHeight = bounds.height();
             
-            sourceRect = new Rect(0, 0, bitmapWidth, bitmapHeight);
-            destRect = new Rect(bounds);
+            sourceRect = new RectF(0, 0, bitmapWidth, bitmapHeight);
+            destRect = new RectF(bounds);
             
             if (preserveAspectRatio) {
                 float bitmapAspect = bitmapWidth / bitmapHeight;

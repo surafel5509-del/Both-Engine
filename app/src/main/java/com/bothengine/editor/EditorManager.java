@@ -28,7 +28,7 @@ public class EditorManager {
     
     private List<EditorWindow> windows;
     private EditorWindow focusedWindow;
-    private int currentTool;
+    private EditorTool currentTool;
     
     private boolean isPlaying;
     private boolean isPaused;
@@ -163,15 +163,33 @@ public class EditorManager {
     /**
      * Set the current tool
      */
-    public void setCurrentTool(int tool) {
+    public void setCurrentTool(EditorTool.Type tool) {
         if (currentTool != null) {
             currentTool.onDisable();
         }
-        
-        currentTool = tool;
-        
+
+        currentTool = createTool(tool);
+
         if (currentTool != null) {
             currentTool.onEnable();
+        }
+    }
+
+    /**
+     * Instantiate the concrete tool implementation for a tool type.
+     */
+    private static EditorTool createTool(EditorTool.Type type) {
+        if (type == null) return null;
+        switch (type) {
+            case MOVE:
+                return new EditorTool.MoveTool();
+            case ROTATE:
+                return new EditorTool.RotateTool();
+            case SCALE:
+                return new EditorTool.ScaleTool();
+            case SELECT:
+            default:
+                return new EditorTool.SelectTool();
         }
     }
     
@@ -352,7 +370,7 @@ public class EditorManager {
         return focusedWindow;
     }
     
-    public int getCurrentTool() {
+    public EditorTool getCurrentTool() {
         return currentTool;
     }
     

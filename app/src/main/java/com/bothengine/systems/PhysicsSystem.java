@@ -60,6 +60,13 @@ public class PhysicsSystem {
     /**
      * Update physics (variable time step)
      */
+    /**
+     * Entities currently tracked by the physics system.
+     */
+    public java.util.List<Entity> getAllEntities() {
+        return entityManager != null ? entityManager.getEntities() : new java.util.ArrayList<>();
+    }
+
     public void update(float deltaTime) {
         if (!enabled || entityManager == null) return;
         
