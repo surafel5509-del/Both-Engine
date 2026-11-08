@@ -150,36 +150,33 @@ jobs:
       - name: Verify APK
         shell: bash
         run: |
+          set -uo pipefail
           APK="${{ steps.apk.outputs.path }}"
-          BUILD_TOOLS_DIR="$(ls -d "${ANDROID_SDK_ROOT}/build-tools/"* 2>/dev/null | sort -V | tail -n1)"
+          BUILD_TOOLS_DIR="$(ls -d "${ANDROID_SDK_ROOT}/build-tools/"* 2>/dev/null | sort -V | tail -n1 || true)"
+          : > verify.txt
 
           # 1) Package metadata (name, version, min/target SDK, launcher activity)
           if [ -n "$BUILD_TOOLS_DIR" ] && [ -x "$BUILD_TOOLS_DIR/aapt2" ]; then
-            "$BUILD_TOOLS_DIR/aapt2" dump badging "$APK" | head -n 8 | tee verify.txt
+            "$BUILD_TOOLS_DIR/aapt2" dump badging "$APK" 2>/dev/null | sed -n '1,8p' >> verify.txt || true
           fi
 
-          # 2) The APK must be signed, otherwise it cannot be installed.
-          if [ -x "$BUILD_TOOLS_DIR/apksigner" ]; then
-            if "$BUILD_TOOLS_DIR/apksigner" verify --print-certs "$APK" > signed.txt 2>&1; then
-              cat signed.txt | tee -a verify.txt
-            else
-              # Diagnostics only: verification is asserted in the dedicated step below.
-              echo "apksigner could not verify this APK:"
-              cat signed.txt
-            fi
-          else
-            echo "::error::apksigner not found - cannot verify the APK signature"
-            exit 1
+          # 2) Signature diagnostics (asserted strictly in the dedicated step below).
+          if [ -n "$BUILD_TOOLS_DIR" ] && [ -x "$BUILD_TOOLS_DIR/apksigner" ]; then
+            "$BUILD_TOOLS_DIR/apksigner" verify --print-certs "$APK" >> verify.txt 2>&1 || \
+              echo "apksigner could not verify this APK" >> verify.txt
           fi
 
           # 3) A DEX payload must exist, i.e. the engine classes made it in.
-          unzip -l "$APK" | grep -q "classes.dex" || { echo "::error::APK contains no classes.dex"; exit 1; }
+          if ! unzip -l "$APK" | grep -q "classes.dex"; then
+            echo "::error::APK contains no classes.dex"
+            exit 1
+          fi
 
           # Surface the essentials as notices so the run page shows them too.
           grep -E "^package: name=|^sdkVersion:|^targetSdkVersion:|^launchable-activity: name=" verify.txt | \
-            while IFS= read -r line; do echo "::notice title=APK::$line"; done
+            while IFS= read -r line; do echo "::notice title=APK::$line"; done || true
           grep -m1 "Signer #1 certificate DN:" verify.txt | \
-            while IFS= read -r line; do echo "::notice title=APK signing::$line"; done
+            while IFS= read -r line; do echo "::notice title=APK signing::$line"; done || true
 
           {
             echo "### APK verification"
