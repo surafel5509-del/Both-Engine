@@ -50,8 +50,7 @@ public class BloomEffect extends PostProcessingEffect {
             "uniform float uThreshold;\n" +
             "void main() {\n" +
             "    vec4 color = texture2D(uTexture, vTexCoord);\n" +
-            "    float brightness = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));
-" +
+            "    float brightness = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));\n" +
             "    if (brightness > uThreshold) {\n" +
             "        gl_FragColor = color;\n" +
             "    } else {\n" +
@@ -70,24 +69,15 @@ public class BloomEffect extends PostProcessingEffect {
             "void main() {\n" +
             "    vec4 color = vec4(0.0);\n" +
             "    vec2 offset = uDirection * uRadius;\n" +
-            "    color += texture2D(uTexture, vTexCoord - offset * 4.0) * 0.0162162162;
-" +
-            "    color += texture2D(uTexture, vTexCoord - offset * 3.0) * 0.0540540541;
-" +
-            "    color += texture2D(uTexture, vTexCoord - offset * 2.0) * 0.1216216216;
-" +
-            "    color += texture2D(uTexture, vTexCoord - offset * 1.0) * 0.1945945946;
-" +
-            "    color += texture2D(uTexture, vTexCoord) * 0.2270270270;
-" +
-            "    color += texture2D(uTexture, vTexCoord + offset * 1.0) * 0.1945945946;
-" +
-            "    color += texture2D(uTexture, vTexCoord + offset * 2.0) * 0.1216216216;
-" +
-            "    color += texture2D(uTexture, vTexCoord + offset * 3.0) * 0.0540540541;
-" +
-            "    color += texture2D(uTexture, vTexCoord + offset * 4.0) * 0.0162162162;
-" +
+            "    color += texture2D(uTexture, vTexCoord - offset * 4.0) * 0.0162162162;\n" +
+            "    color += texture2D(uTexture, vTexCoord - offset * 3.0) * 0.0540540541;\n" +
+            "    color += texture2D(uTexture, vTexCoord - offset * 2.0) * 0.1216216216;\n" +
+            "    color += texture2D(uTexture, vTexCoord - offset * 1.0) * 0.1945945946;\n" +
+            "    color += texture2D(uTexture, vTexCoord) * 0.2270270270;\n" +
+            "    color += texture2D(uTexture, vTexCoord + offset * 1.0) * 0.1945945946;\n" +
+            "    color += texture2D(uTexture, vTexCoord + offset * 2.0) * 0.1216216216;\n" +
+            "    color += texture2D(uTexture, vTexCoord + offset * 3.0) * 0.0540540541;\n" +
+            "    color += texture2D(uTexture, vTexCoord + offset * 4.0) * 0.0162162162;\n" +
             "    gl_FragColor = color;\n" +
             "}";
         
