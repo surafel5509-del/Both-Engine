@@ -23,6 +23,7 @@ jobs:
       - name: Report environment
         shell: bash
         run: |
+          set +e
           {
             echo "ANDROID_HOME=$ANDROID_HOME"
             echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
@@ -31,7 +32,8 @@ jobs:
             ls "$ANDROID_SDK_ROOT/platforms" 2>/dev/null
             ls "$ANDROID_SDK_ROOT/build-tools" 2>/dev/null
             which sdkmanager
-          } > /tmp/env.txt
+            env | grep -i -E "android|java|gradle" | sort
+          } > /tmp/env.txt 2>&1 || true
 
       - name: Build
         shell: bash
