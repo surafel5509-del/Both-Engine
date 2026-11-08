@@ -67,10 +67,16 @@ jobs:
             adb install -r -t "$APK" >> smoke.env 2>&1 || true
             echo "INSTALL_END" >> smoke.env
             adb logcat -c || true
-            adb shell am start -W -n com.bothengine.game/.GameActivity >> smoke.env 2>&1 || true
+            # Stream from BEFORE the launch: the crash can happen within milliseconds
+            # and would otherwise be evicted from the ring buffer.
+            (adb logcat -v threadtime > logcat.txt 2>&1 &) || true
+            sleep 2
+            adb shell am start -W -n com.bothengine.game/.GameActivity > am-start.txt 2>&1 || true
+            cat am-start.txt >> smoke.env
             sleep 15
             echo "PID=$(adb shell pidof com.bothengine.game | tr -d '\r')" >> smoke.env
-            adb logcat -d > logcat.txt 2>/dev/null || true
+            pkill -f "adb logcat" || true
+            adb logcat -d >> logcat.txt 2>/dev/null || true
             adb shell dumpsys activity activities > activities.txt 2>/dev/null || true
             cat smoke.env
             true
@@ -149,6 +155,16 @@ jobs:
             echo '```' >> "$GITHUB_STEP_SUMMARY"
             cat smoke.env >> "$GITHUB_STEP_SUMMARY" || true
             echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+            # am start output tells us whether the activity resolved at all.
+            if [ -f am-start.txt ]; then
+              head -n 12 am-start.txt | while IFS= read -r line; do
+                echo "::error title=am start::$line"
+              done
+            fi
+            # The first app-scoped lines usually hold the cause.
+            grep -E "com\.bothengine|AndroidRuntime" logcat.txt 2>/dev/null | head -n 12 | \
+              while IFS= read -r line; do echo "::error title=Log::$line"; done || true
             exit 1
           fi
 
