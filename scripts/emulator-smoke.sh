@@ -152,14 +152,27 @@ test_apk() {
     annotate error "No-surface-$label" "GL surface was never created"
     return 1
   fi
-  if [ "$frames" -le 0 ]; then
-    annotate error "No-frames-$label" "Alive but rendered 0 frames"
+  # gfxinfo under-reports for GLSurfaceView, so also count the renderer's own
+  # frame log and use whichever is larger.
+  local log_frames
+  log_frames="$(grep -oE "Rendering frame [0-9]+" "$logcat" 2>/dev/null |
+    grep -oE "[0-9]+$" | sort -n | tail -n1)"
+  case "$log_frames" in ''|*[!0-9]*) log_frames=0 ;; esac
+  [ "$log_frames" -gt "$frames" ] && frames="$log_frames"
+  note_env "FRAMES[$label]=$frames"
+
+  if [ "$frames" -lt 30 ]; then
+    annotate error "Render-stalled-$label" \
+      "Only $frames frames in ~15s; the render loop is not running continuously"
     return 1
   fi
 
+  summary "App log:"
+  summary '```'
   grep -E "(GameActivity|EngineApplication|RenderManager|Renderer|FallbackRenderer):|Displayed $PKG" \
-    "$logcat" 2>/dev/null | tail -n 8 |
-    while IFS= read -r line; do annotate notice "App-log-$label" "$line"; done
+    "$logcat" 2>/dev/null | tail -n 10 | sed 's/^/    /' >> "$SUMMARY"
+  summary '```'
+  summary ""
 
   annotate notice "Smoke test $label" \
     "PASS: displayed, GL surface created, $frames frames rendered, pid $pid alive"
