@@ -40,7 +40,7 @@ public class EditorManager {
     private EditorManager() {
         this.windows = new ArrayList<>();
         this.focusedWindow = null;
-        this.currentTool = EditorTool.SELECT;
+        this.currentTool = createTool(EditorTool.SELECT);
         this.isPlaying = false;
         this.isPaused = false;
         this.isEditing = true;

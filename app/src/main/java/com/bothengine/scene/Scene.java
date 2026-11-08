@@ -310,7 +310,6 @@ public class Scene {
         this.physicsEnabled = physicsEnabled;
     }
     
-    @Override
     /**
      * Snapshot the scene so the editor can restore it after play mode.
      */
