@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Both Engine - String Resources -->
+
+<resources>
+    <string name="app_name">Both Engine</string>
+    <string name="game_title">Both Engine Game</string>
+    <string name="editor_title">Both Engine Editor</string>
+</resources>

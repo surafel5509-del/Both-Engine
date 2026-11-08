@@ -1,0 +1,5 @@
+// Both Engine - Professional Game Engine
+// Settings file for multi-module project
+
+include ':app'
+rootProject.name = "Both-Engine"
