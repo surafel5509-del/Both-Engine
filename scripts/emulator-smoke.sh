@@ -217,6 +217,15 @@ test_apk() {
     annotate notice "SceneRows-$label" "$(printf '%s' "$scene_rows" | tr -d '\n' | tr -d '|')"
   fi
 
+  # The on-screen build label tells a user which build they are looking at.
+  local label_line
+  label_line="$(grep -m1 "Build label:" "$logcat" 2>/dev/null | sed 's/.*Build label: //' | tr -d '\r')"
+  if [ -z "$label_line" ]; then
+    annotate error "No-label-$label" "The build label was never drawn"
+    return 1
+  fi
+  annotate notice "Build-$label" "$label_line"
+
   if ! printf '%s' "$scene_check" | grep -q "PASS"; then
     annotate error "Scene-blank-$label" "${scene_stats:-no verdict logged}"
     summary "FAIL: the app reports nothing but background on screen."

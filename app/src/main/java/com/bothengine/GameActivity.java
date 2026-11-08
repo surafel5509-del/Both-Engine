@@ -121,9 +121,21 @@ public class GameActivity extends Activity {
             // Safe now: the GL thread has been created by setRenderer().
             glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 
-            // Set content view
-            setContentView(glSurfaceView);
-            
+            // Wrap the surface in a layout so a build label can be drawn on top.
+            setContentView(R.layout.activity_game);
+            android.widget.FrameLayout root = findViewById(R.id.game_root);
+            android.widget.TextView label = findViewById(R.id.build_label);
+            if (root != null && glSurfaceView != null) {
+                root.addView(glSurfaceView, 0,
+                    new android.widget.FrameLayout.LayoutParams(
+                        android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.FrameLayout.LayoutParams.MATCH_PARENT));
+            }
+            if (label != null) {
+                label.setText(buildLabelText());
+                Log.i(TAG, "Build label: " + buildLabelText());
+            }
+
             Log.i(TAG, "OpenGL initialized");
         } catch (Exception e) {
             Log.e(TAG, "Failed to initialize OpenGL: " + e.getMessage(), e);
@@ -324,6 +336,23 @@ public class GameActivity extends Activity {
             }
             scene.drawFrame(delta, width, height);
         }
+    }
+
+    /**
+     * Short text identifying the build, shown over the rendered scene.
+     */
+    private String buildLabelText() {
+        String version;
+        try {
+            android.content.pm.PackageInfo info = getPackageManager()
+                .getPackageInfo(getPackageName(), 0);
+            version = info.versionName + " (" + info.versionCode + ")";
+        } catch (Throwable t) {
+            version = "unknown";
+        }
+        String scene = renderManager != null && renderManager.getRenderer() != null
+            && renderManager.getRenderer().isSceneReady() ? "scene live" : "scene starting";
+        return "Both Engine " + version + " \u00b7 " + scene;
     }
 
     /**
