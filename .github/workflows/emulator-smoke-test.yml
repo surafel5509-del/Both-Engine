@@ -130,8 +130,8 @@ jobs:
 
           if [ -z "$PID" ]; then
             echo "::error title=Smoke test::App process is not running after launch"
-            # Everything that can explain a dead process, in one place.
-            RELEVANT="$(grep -iE "bothengine|androidruntime|fatal|exception|died|crash|force finishing|ANR|am_crash|am_proc_died|Force stop|Unable to start|Install" logcat.txt 2>/dev/null | tail -n 40)"
+            # Everything that can explain a dead process, app-scoped only.
+            RELEVANT="$(grep -E "com\.bothengine|bothengine|AndroidRuntime|FATAL EXCEPTION|am_crash|am_proc_died|ActivityManager.*(died|crash)|ActivityTaskManager.*bothengine|libc.*bothengine" logcat.txt 2>/dev/null | tail -n 40)"
             if [ -n "$RELEVANT" ]; then
               {
                 echo "### Why the app stopped"
