@@ -63,7 +63,9 @@ jobs:
           script: |
             APK=$(find app/build/outputs/apk/debug -name '*.apk' | head -n1)
             echo "APK=$APK" > smoke.env
+            echo "INSTALL_BEGIN" >> smoke.env
             adb install -r -t "$APK" >> smoke.env 2>&1 || true
+            echo "INSTALL_END" >> smoke.env
             adb logcat -c || true
             adb shell am start -W -n com.bothengine.game/.GameActivity >> smoke.env 2>&1 || true
             sleep 15
@@ -115,10 +117,38 @@ jobs:
             fi
           fi
 
+          # Install diagnostics: a failed install also leaves no process behind.
+          INSTALL="$(sed -n '/INSTALL_BEGIN/,/INSTALL_END/p' smoke.env)"
+          if printf '%s' "$INSTALL" | grep -qi "failure"; then
+            echo "### Install failed" >> "$GITHUB_STEP_SUMMARY"
+            printf '%s\n' "$INSTALL" >> "$GITHUB_STEP_SUMMARY"
+            printf '%s\n' "$INSTALL" | while IFS= read -r line; do
+              echo "::error title=Install::$line"
+            done
+            exit 1
+          fi
+
           if [ -z "$PID" ]; then
             echo "::error title=Smoke test::App process is not running after launch"
-            grep -E "AndroidRuntime|bothengine|Start proc|Displayed|ActivityTaskManager" logcat.txt 2>/dev/null | tail -n 25 | \
-              while IFS= read -r line; do echo "::error title=App state::$line"; done || true
+            # Everything that can explain a dead process, in one place.
+            RELEVANT="$(grep -iE "bothengine|androidruntime|fatal|exception|died|crash|force finishing|ANR|am_crash|am_proc_died|Force stop|Unable to start|Install" logcat.txt 2>/dev/null | tail -n 40)"
+            if [ -n "$RELEVANT" ]; then
+              {
+                echo "### Why the app stopped"
+                echo '```'
+                printf '%s\n' "$RELEVANT"
+                echo '```'
+              } >> "$GITHUB_STEP_SUMMARY"
+              printf '%s\n' "$RELEVANT" | head -n 15 | while IFS= read -r line; do
+                echo "::error title=App stopped::$line"
+              done
+            else
+              echo "::error title=App stopped::No app-specific log found; see smoke.env below"
+            fi
+            echo "### smoke.env" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            cat smoke.env >> "$GITHUB_STEP_SUMMARY" || true
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
 
