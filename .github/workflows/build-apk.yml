@@ -160,7 +160,13 @@ jobs:
 
           # 2) The APK must be signed, otherwise it cannot be installed.
           if [ -x "$BUILD_TOOLS_DIR/apksigner" ]; then
-            "$BUILD_TOOLS_DIR/apksigner" verify --print-certs "$APK" | tee -a verify.txt
+            if "$BUILD_TOOLS_DIR/apksigner" verify --print-certs "$APK" > signed.txt 2>&1; then
+              cat signed.txt | tee -a verify.txt
+            else
+              # Diagnostics only: verification is asserted in the dedicated step below.
+              echo "apksigner could not verify this APK:"
+              cat signed.txt
+            fi
           else
             echo "::error::apksigner not found - cannot verify the APK signature"
             exit 1
@@ -260,6 +266,25 @@ jobs:
           cp "$APK" "$OUT"
           echo "path=$OUT" >> "$GITHUB_OUTPUT"
           ls -lh "$OUT"
+
+      - name: Verify APKs are signed and installable
+        shell: bash
+        run: |
+          BUILD_TOOLS_DIR="$(ls -d "${ANDROID_SDK_ROOT}/build-tools/"* 2>/dev/null | sort -V | tail -n1)"
+          SIGNER="$BUILD_TOOLS_DIR/apksigner"
+          [ -x "$SIGNER" ] || { echo "::error::apksigner not found"; exit 1; }
+
+          for APK in "${{ steps.apk.outputs.path }}" "${{ steps.release_apk.outputs.path }}"; do
+            [ -n "$APK" ] || continue
+            if "$SIGNER" verify "$APK"; then
+              echo "::notice title=Signed APK::$APK verified"
+            else
+              echo "::error title=Unsigned APK::$APK is not signed and cannot be installed"
+              exit 1
+            fi
+            unzip -l "$APK" | grep -q "classes.dex" || {
+              echo "::error title=Empty APK::$APK contains no classes.dex"; exit 1; }
+          done
 
       - name: Upload release APK
         if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.build_release || inputs.publish_release }}
