@@ -30,6 +30,7 @@ public class EngineApplication extends Application {
         instance = this;
         
         installCrashLogger();
+        logStartupDiagnostics();
 
         try {
             Log.i(TAG, "Both Engine Application Started");
@@ -94,6 +95,31 @@ public class EngineApplication extends Application {
                 }
             }
         });
+    }
+
+    /**
+     * Log the environment once so a startup problem can be diagnosed from a
+     * logcat dump alone.
+     */
+    private void logStartupDiagnostics() {
+        try {
+            android.content.pm.PackageInfo info = getPackageManager()
+                .getPackageInfo(getPackageName(), 0);
+            Log.i(TAG, "Startup diagnostics: package=" + getPackageName()
+                + " version=" + info.versionName + " (" + info.versionCode + ")"
+                + " sdk=" + android.os.Build.VERSION.SDK_INT
+                + " device=" + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL
+                + " gl=" + (getPackageManager().hasSystemFeature(
+                    android.content.pm.PackageManager.FEATURE_OPENGLES_EXTENSION_PACK)
+                    ? "ext-pack" : "es2"));
+        } catch (Throwable t) {
+            Log.w(TAG, "Startup diagnostics unavailable: " + t.getMessage());
+        }
+
+        File previous = new File(getFilesDir(), getLastCrashFileName());
+        if (previous.exists()) {
+            Log.w(TAG, "A previous session crashed; report kept at " + previous.getAbsolutePath());
+        }
     }
 
     /** Name of the file holding the most recent crash report. */
