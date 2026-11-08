@@ -11,4 +11,5 @@
     <color name="colorOnPrimary">#FFFFFF</color>
     <color name="colorOnBackground">#FFFFFF</color>
     <color name="colorOnSurface">#FFFFFF</color>
+    <color name="ic_launcher_background">#4A0ED6</color>
 </resources>

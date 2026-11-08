@@ -1,0 +1,47 @@
+name: CI Build
+
+on:
+  push:
+    branches-ignore: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  assemble:
+    name: Compile and package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Point Gradle at the runner's Android SDK
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+      - name: Assemble debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace assembleDebug
+
+      - name: Collect compiler diagnostics
+        if: always()
+        run: |
+          find app/build -name '*.txt' -path '*logs*' -print -exec tail -n 200 {} \; 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BothEngine-debug-apk-ci
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
