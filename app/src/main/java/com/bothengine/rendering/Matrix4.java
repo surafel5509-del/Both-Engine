@@ -11,7 +11,7 @@ public class Matrix4 {
     
     public Matrix4() {
         data = new float[SIZE];
-        identity();
+        setIdentity();
     }
     
     public Matrix4(float[] data) {
@@ -23,15 +23,13 @@ public class Matrix4 {
      * Create an identity matrix
      */
     public static Matrix4 identity() {
-        Matrix4 matrix = new Matrix4();
-        matrix.identity();
-        return matrix;
+        return new Matrix4();
     }
     
     /**
      * Set this matrix to identity
      */
-    public Matrix4 identity() {
+    public Matrix4 setIdentity() {
         for (int i = 0; i < SIZE; i++) {
             data[i] = 0;
         }
@@ -42,10 +40,8 @@ public class Matrix4 {
     /**
      * Create a translation matrix
      */
-    public static Matrix4 translate(Vector3 vector) {
-        Matrix4 matrix = new Matrix4();
-        matrix.translate(vector);
-        return matrix;
+    public static Matrix4 translation(Vector3 vector) {
+        return new Matrix4().translate(vector);
     }
     
     /**
@@ -185,10 +181,8 @@ public class Matrix4 {
     /**
      * Create a scale matrix
      */
-    public static Matrix4 scale(Vector3 vector) {
-        Matrix4 matrix = new Matrix4();
-        matrix.scale(vector);
-        return matrix;
+    public static Matrix4 scaling(Vector3 vector) {
+        return new Matrix4().scale(vector);
     }
     
     /**

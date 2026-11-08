@@ -3,7 +3,7 @@ package com.bothengine.components;
 import com.bothengine.core.ecs.Component;
 import com.bothengine.rendering.Matrix4;
 import com.bothengine.rendering.Vector3;
-import com.bothengine.rendering.Quaternion;
+import com.bothengine.components.Quaternion;
 
 /**
  * TransformComponent
