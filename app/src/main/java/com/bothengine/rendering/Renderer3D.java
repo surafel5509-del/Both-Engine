@@ -165,7 +165,7 @@ public class Renderer3D {
         
         // Set view-projection matrix
         Matrix4 viewProjection = Matrix4.multiply(projectionMatrix, viewMatrix);
-        shader.setUniform("uViewProjectionMatrix", viewProjection.data);
+        shader.setUniformMatrix("uViewProjectionMatrix", viewProjection.data);
         
         // Set lighting
         if (lights.isEmpty()) {
@@ -205,14 +205,14 @@ public class Renderer3D {
         Matrix4 modelMatrix = model.getTransformMatrix();
         
         // Set model matrix
-        shader.setUniform("uModelMatrix", modelMatrix.data);
+        shader.setUniformMatrix("uModelMatrix", modelMatrix.data);
         
         // Calculate normal matrix
         Matrix4 normalMatrix = modelMatrix.invert().transpose();
-        shader.setUniform("uNormalMatrix", normalMatrix.data);
+        shader.setUniformMatrix("uNormalMatrix", normalMatrix.data);
         
         // Bind material
-        Material material = model.getMaterial();
+        Material material = model.getMaterial(0);
         if (material != null) {
             material.bind(shader);
         }
@@ -237,11 +237,11 @@ public class Renderer3D {
         Matrix4 modelMatrix = renderer.getTransformMatrix();
         
         // Set model matrix
-        shader.setUniform("uModelMatrix", modelMatrix.data);
+        shader.setUniformMatrix("uModelMatrix", modelMatrix.data);
         
         // Calculate normal matrix
         Matrix4 normalMatrix = modelMatrix.invert().transpose();
-        shader.setUniform("uNormalMatrix", normalMatrix.data);
+        shader.setUniformMatrix("uNormalMatrix", normalMatrix.data);
         
         // Bind material
         Material material = renderer.getMaterial();
@@ -270,11 +270,11 @@ public class Renderer3D {
         shader.use();
         
         Matrix4 viewProjection = Matrix4.multiply(projectionMatrix, viewMatrix);
-        shader.setUniform("uViewProjectionMatrix", viewProjection.data);
-        shader.setUniform("uModelMatrix", modelMatrix.data);
+        shader.setUniformMatrix("uViewProjectionMatrix", viewProjection.data);
+        shader.setUniformMatrix("uModelMatrix", modelMatrix.data);
         
         Matrix4 normalMatrix = modelMatrix.invert().transpose();
-        shader.setUniform("uNormalMatrix", normalMatrix.data);
+        shader.setUniformMatrix("uNormalMatrix", normalMatrix.data);
         
         shader.setUniform("uLightDirection", 0, 1, 0);
         shader.setUniform("uLightColor", 1, 1, 1);

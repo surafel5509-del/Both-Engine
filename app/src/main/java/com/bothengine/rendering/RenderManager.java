@@ -59,8 +59,8 @@ public class RenderManager {
         glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
         
         // Create cameras
-        this.mainCamera = new Camera(CameraType.PERSPECTIVE);
-        this.uiCamera = new Camera(CameraType.ORTHOGRAPHIC);
+        this.mainCamera = new Camera(Camera.CameraType.PERSPECTIVE);
+        this.uiCamera = new Camera(Camera.CameraType.ORTHOGRAPHIC);
         
         Log.i(TAG, "RenderManager initialized with GLSurfaceView");
     }

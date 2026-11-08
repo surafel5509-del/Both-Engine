@@ -56,10 +56,10 @@ public class TransformComponent extends Component {
     private void updateMatrix() {
         if (!dirty) return;
         
-        worldMatrix = Matrix4.identity();
-        worldMatrix.translate(position);
-        worldMatrix.rotate(rotation);
-        worldMatrix.scale(scale);
+        worldMatrix = Matrix4.identity()
+                .translate(position)
+                .rotate(rotation)
+                .scale(scale);
         
         // If has parent, multiply by parent matrix
         if (parent != null) {
@@ -81,11 +81,10 @@ public class TransformComponent extends Component {
      * Get the local transformation matrix
      */
     public Matrix4 getLocalMatrix() {
-        Matrix4 matrix = new Matrix4();
-        matrix.translate(position);
-        matrix.rotate(rotation);
-        matrix.scale(scale);
-        return matrix;
+        return new Matrix4()
+                .translate(position)
+                .rotate(rotation)
+                .scale(scale);
     }
     
     /**
@@ -196,7 +195,7 @@ public class TransformComponent extends Component {
     // Scale methods
     
     public void scale(Vector3 scale) {
-        this.scale = this.scale.multiply(scale);
+        this.scale = Vector3.multiply(this.scale, scale);
         setDirty();
     }
     

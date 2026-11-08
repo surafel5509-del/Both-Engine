@@ -94,9 +94,9 @@ public class Model {
         modelMatrix.translate(position);
         
         // Rotate
-        if (rotation.x != 0) modelMatrix.rotateX((float) Math.toRadians(rotation.x));
-        if (rotation.y != 0) modelMatrix.rotateY((float) Math.toRadians(rotation.y));
-        if (rotation.z != 0) modelMatrix.rotateZ((float) Math.toRadians(rotation.z));
+        if (rotation.x != 0) modelMatrix.multiply(Matrix4.rotateXStatic((float) Math.toRadians(rotation.x)));
+        if (rotation.y != 0) modelMatrix.multiply(Matrix4.rotateYStatic((float) Math.toRadians(rotation.y)));
+        if (rotation.z != 0) modelMatrix.multiply(Matrix4.rotateZStatic((float) Math.toRadians(rotation.z)));
         
         // Scale
         modelMatrix.scale(scale);

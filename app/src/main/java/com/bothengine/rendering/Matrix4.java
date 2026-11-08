@@ -31,11 +31,12 @@ public class Matrix4 {
     /**
      * Set this matrix to identity
      */
-    public void identity() {
+    public Matrix4 identity() {
         for (int i = 0; i < SIZE; i++) {
             data[i] = 0;
         }
         data[0] = data[5] = data[10] = data[15] = 1;
+        return this;
     }
     
     /**
@@ -50,7 +51,7 @@ public class Matrix4 {
     /**
      * Translate this matrix
      */
-    public void translate(Vector3 vector) {
+    public Matrix4 translate(Vector3 vector) {
         float x = vector.x;
         float y = vector.y;
         float z = vector.z;
@@ -59,12 +60,13 @@ public class Matrix4 {
         data[13] += data[1] * x + data[5] * y + data[9] * z;
         data[14] += data[2] * x + data[6] * y + data[10] * z;
         data[15] += data[3] * x + data[7] * y + data[11] * z;
+        return this;
     }
     
     /**
      * Create a rotation matrix around X axis
      */
-    public static Matrix4 rotateX(float angle) {
+    public static Matrix4 rotateXStatic(float angle) {
         Matrix4 matrix = new Matrix4();
         matrix.rotateX(angle);
         return matrix;
@@ -73,7 +75,7 @@ public class Matrix4 {
     /**
      * Rotate this matrix around X axis
      */
-    public void rotateX(float angle) {
+    public Matrix4 rotateX(float angle) {
         float cos = (float) Math.cos(angle);
         float sin = (float) Math.sin(angle);
         
@@ -89,12 +91,13 @@ public class Matrix4 {
         data[9] = temp[5] * -sin + temp[9] * cos;
         data[10] = temp[6] * -sin + temp[10] * cos;
         data[11] = temp[7] * -sin + temp[11] * cos;
+        return this;
     }
     
     /**
      * Create a rotation matrix around Y axis
      */
-    public static Matrix4 rotateY(float angle) {
+    public static Matrix4 rotateYStatic(float angle) {
         Matrix4 matrix = new Matrix4();
         matrix.rotateY(angle);
         return matrix;
@@ -103,7 +106,7 @@ public class Matrix4 {
     /**
      * Rotate this matrix around Y axis
      */
-    public void rotateY(float angle) {
+    public Matrix4 rotateY(float angle) {
         float cos = (float) Math.cos(angle);
         float sin = (float) Math.sin(angle);
         
@@ -119,12 +122,13 @@ public class Matrix4 {
         data[9] = temp[1] * sin + temp[9] * cos;
         data[10] = temp[2] * sin + temp[10] * cos;
         data[11] = temp[3] * sin + temp[11] * cos;
+        return this;
     }
     
     /**
      * Create a rotation matrix around Z axis
      */
-    public static Matrix4 rotateZ(float angle) {
+    public static Matrix4 rotateZStatic(float angle) {
         Matrix4 matrix = new Matrix4();
         matrix.rotateZ(angle);
         return matrix;
@@ -133,7 +137,7 @@ public class Matrix4 {
     /**
      * Rotate this matrix around Z axis
      */
-    public void rotateZ(float angle) {
+    public Matrix4 rotateZ(float angle) {
         float cos = (float) Math.cos(angle);
         float sin = (float) Math.sin(angle);
         
@@ -149,8 +153,35 @@ public class Matrix4 {
         data[5] = temp[1] * -sin + temp[5] * cos;
         data[6] = temp[2] * -sin + temp[6] * cos;
         data[7] = temp[3] * -sin + temp[7] * cos;
+        return this;
     }
     
+    /**
+     * Rotate this matrix by a quaternion
+     */
+    public Matrix4 rotate(com.bothengine.components.Quaternion q) {
+        float x = q.x, y = q.y, z = q.z, w = q.w;
+        float xx = x * x, yy = y * y, zz = z * z;
+        float xy = x * y, xz = x * z, yz = y * z;
+        float wx = w * x, wy = w * y, wz = w * z;
+
+        float[] r = new float[SIZE];
+        r[0]  = 1 - 2 * (yy + zz);
+        r[1]  = 2 * (xy - wz);
+        r[2]  = 2 * (xz + wy);
+        r[4]  = 2 * (xy + wz);
+        r[5]  = 1 - 2 * (xx + zz);
+        r[6]  = 2 * (yz - wx);
+        r[8]  = 2 * (xz - wy);
+        r[9]  = 2 * (yz + wx);
+        r[10] = 1 - 2 * (xx + yy);
+        r[15] = 1;
+
+        Matrix4 rotation = new Matrix4(r);
+        multiply(rotation);
+        return this;
+    }
+
     /**
      * Create a scale matrix
      */
@@ -163,7 +194,7 @@ public class Matrix4 {
     /**
      * Scale this matrix
      */
-    public void scale(Vector3 vector) {
+    public Matrix4 scale(Vector3 vector) {
         float x = vector.x;
         float y = vector.y;
         float z = vector.z;
@@ -182,6 +213,7 @@ public class Matrix4 {
         data[9] *= z;
         data[10] *= z;
         data[11] *= z;
+        return this;
     }
     
     /**
@@ -279,7 +311,7 @@ public class Matrix4 {
     /**
      * Multiply this matrix by another
      */
-    public void multiply(Matrix4 other) {
+    public Matrix4 multiply(Matrix4 other) {
         float[] temp = new float[SIZE];
         System.arraycopy(data, 0, temp, 0, SIZE);
         
@@ -291,6 +323,7 @@ public class Matrix4 {
                 }
             }
         }
+        return this;
     }
     
     /**

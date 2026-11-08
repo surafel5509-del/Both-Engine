@@ -205,7 +205,7 @@ public class ParticleSystem {
             if (particle.isVisible()) {
                 // Set model matrix
                 Matrix4 modelMatrix = particle.getTransformMatrix();
-                shader.setUniform("uModelMatrix", modelMatrix.data);
+                shader.setUniformMatrix("uModelMatrix", modelMatrix.data);
                 
                 // Set color
                 Color color = particle.getColor();

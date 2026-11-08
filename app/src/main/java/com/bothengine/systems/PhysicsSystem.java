@@ -212,10 +212,15 @@ public class PhysicsSystem {
         float tmin = 0;
         float tmax = Float.POSITIVE_INFINITY;
         
+        float[] dir = direction.toArray();
+        float[] lo = min.toArray();
+        float[] hi = max.toArray();
+        float[] org = origin.toArray();
+
         for (int i = 0; i < 3; i++) {
-            float invD = 1.0f / direction.data[i];
-            float t1 = (min.data[i] - origin.data[i]) * invD;
-            float t2 = (max.data[i] - origin.data[i]) * invD;
+            float invD = 1.0f / dir[i];
+            float t1 = (lo[i] - org[i]) * invD;
+            float t2 = (hi[i] - org[i]) * invD;
             
             tmin = Math.max(tmin, Math.min(t1, t2));
             tmax = Math.min(tmax, Math.max(t1, t2));

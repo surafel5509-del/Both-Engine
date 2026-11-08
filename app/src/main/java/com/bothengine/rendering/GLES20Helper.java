@@ -67,14 +67,12 @@ public class GLES20Helper {
     }
     
     /**
-     * Enable wireframe mode
+     * Enable wireframe mode.
+     * OpenGL ES 2.0 has no polygon mode, so this is a no-op placeholder kept for
+     * API compatibility; renderers may switch to a line primitive mode instead.
      */
     public static void enableWireframe(boolean enabled) {
-        if (enabled) {
-            GLES20.glPolygonMode(GLES20.GL_FRONT_AND_BACK, GLES20.GL_LINE);
-        } else {
-            GLES20.glPolygonMode(GLES20.GL_FRONT_AND_BACK, GLES20.GL_FILL);
-        }
+        Log.d(TAG, "Wireframe mode requested: " + enabled + " (unsupported on GLES 2.0)");
     }
     
     /**
@@ -186,9 +184,9 @@ public class GLES20Helper {
      * This is a helper for OpenGL ES 3.0+
      */
     public static int createVAO() {
-        int[] vao = new int[1];
-        GLES20.glGenVertexArrays(1, vao, 0);
-        return vao[0];
+        // Vertex array objects require OpenGL ES 3.0 / OES_vertex_array_object,
+        // which this engine does not target yet.
+        return 0;
     }
     
     /**
@@ -211,8 +209,7 @@ public class GLES20Helper {
      * Delete a VAO
      */
     public static void deleteVAO(int vao) {
-        int[] vaos = new int[] { vao };
-        GLES20.glDeleteVertexArrays(1, vaos, 0);
+        // No-op: see createVAO().
     }
     
     /**

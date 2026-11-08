@@ -145,7 +145,7 @@ public class Renderer2D {
         shader.use();
         
         // Set projection matrix
-        shader.setUniform("uViewProjectionMatrix", projectionMatrix.data);
+        shader.setUniformMatrix("uViewProjectionMatrix", projectionMatrix.data);
         
         // Render sprites
         renderSprites(sprites);
@@ -201,7 +201,7 @@ public class Renderer2D {
                 
                 // Set model matrix
                 Matrix4 modelMatrix = sprite.getTransformMatrix();
-                shader.setUniform("uModelMatrix", modelMatrix.data);
+                shader.setUniformMatrix("uModelMatrix", modelMatrix.data);
                 
                 // Set color
                 Color color = sprite.getColor();
@@ -226,10 +226,10 @@ public class Renderer2D {
         if (!shader.isCompiled() || !sprite.isVisible()) return;
         
         shader.use();
-        shader.setUniform("uViewProjectionMatrix", projectionMatrix.data);
+        shader.setUniformMatrix("uViewProjectionMatrix", projectionMatrix.data);
         
         Matrix4 modelMatrix = sprite.getTransformMatrix();
-        shader.setUniform("uModelMatrix", modelMatrix.data);
+        shader.setUniformMatrix("uModelMatrix", modelMatrix.data);
         
         if (sprite.getMaterial() != null) {
             sprite.getMaterial().bind(shader);

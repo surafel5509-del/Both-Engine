@@ -312,7 +312,7 @@ public class Camera {
      * Rotate camera around X axis
      */
     public void rotateX(float angle) {
-        Matrix4 rotation = Matrix4.rotateX(angle);
+        Matrix4 rotation = Matrix4.rotateXStatic(angle);
         forward = Matrix4.transform(rotation, forward);
         up = Matrix4.transform(rotation, up);
         forward.normalize();
@@ -326,7 +326,7 @@ public class Camera {
      * Rotate camera around Y axis
      */
     public void rotateY(float angle) {
-        Matrix4 rotation = Matrix4.rotateY(angle);
+        Matrix4 rotation = Matrix4.rotateYStatic(angle);
         forward = Matrix4.transform(rotation, forward);
         right = Matrix4.transform(rotation, right);
         forward.normalize();
@@ -340,7 +340,7 @@ public class Camera {
      * Rotate camera around Z axis
      */
     public void rotateZ(float angle) {
-        Matrix4 rotation = Matrix4.rotateZ(angle);
+        Matrix4 rotation = Matrix4.rotateZStatic(angle);
         up = Matrix4.transform(rotation, up);
         right = Matrix4.transform(rotation, right);
         up.normalize();

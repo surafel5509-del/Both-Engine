@@ -69,16 +69,11 @@ public class ColliderComponent extends Component {
     private void updateBounds() {
         switch (type) {
             case BOX:
-                bounds = new Bounds(
-                    Vector3.subtract(center, Vector3.multiply(size, 0.5f)),
-                    Vector3.add(center, Vector3.multiply(size, 0.5f))
-                );
+                bounds = Bounds.fromCenterAndSize(center, size);
                 break;
             case SPHERE:
-                bounds = new Bounds(
-                    Vector3.subtract(center, new Vector3(radius, radius, radius)),
-                    Vector3.add(center, new Vector3(radius, radius, radius))
-                );
+                bounds = Bounds.fromCenterAndSize(center,
+                    new Vector3(radius * 2f, radius * 2f, radius * 2f));
                 break;
             case CAPSULE:
             case MESH:
