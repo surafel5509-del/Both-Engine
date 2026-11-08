@@ -9,31 +9,25 @@ on:
   workflow_dispatch:
     inputs:
       build_release:
-        description: 'Also build a release (signed if secrets are set) APK'
+        description: 'Also build a release APK'
         type: boolean
         default: false
       publish_release:
-        description: 'Attach the APKs to a GitHub Release (uses the commit short SHA as tag)'
+        description: 'Attach the APKs to a GitHub Release'
         type: boolean
         default: false
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: build-apk-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: write
 
-env:
-  GRADLE_OPTS: >-
-    -Dorg.gradle.daemon=false
-    -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8"
-
 jobs:
   build:
     name: Build Both Engine APK
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -49,25 +43,18 @@ jobs:
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
 
-      - name: Set up Android SDK
+      - name: Install Android SDK packages
         shell: bash
         run: |
-          # GitHub's ubuntu runner ships with the Android SDK; make sure the
-          # platform/build-tools this project needs are actually installed.
           SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/Android/Sdk}}"
           echo "Android SDK: $SDK_ROOT"
-          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
-          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "sdk.dir=$SDK_ROOT" > local.properties
 
           SDKMANAGER="$(ls -d "$SDK_ROOT"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -n1 || true)"
           if [ -n "$SDKMANAGER" ]; then
-            yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
-            "$SDKMANAGER" "platform-tools" "platforms;android-34" "build-tools;34.0.0" >/dev/null || true
-          else
-            echo "sdkmanager not found - relying on SDK packages preinstalled in the runner image."
+            yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+            "$SDKMANAGER" "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null || true
           fi
-
-          echo "sdk.dir=$SDK_ROOT" > local.properties
 
       - name: Resolve version info
         id: version
@@ -87,12 +74,12 @@ jobs:
           ./gradlew --no-daemon --stacktrace assembleDebug
 
       - name: Run unit tests
-        if: ${{ always() && github.event_name != 'pull_request' }}
+        if: always()
         continue-on-error: true
         shell: bash
         run: ./gradlew --no-daemon testDebugUnitTest
 
-      - name: Locate debug APK
+      - name: Collect debug APK
         id: apk
         shell: bash
         run: |
@@ -105,16 +92,7 @@ jobs:
           cp "$APK" "$OUT"
           echo "path=$OUT" >> "$GITHUB_OUTPUT"
           ls -lh "$OUT"
-
-      - name: Verify APK
-        shell: bash
-        run: |
-          APK="${{ steps.apk.outputs.path }}"
-          BUILD_TOOLS="$(ls -d "${ANDROID_SDK_ROOT}"/build-tools/* 2>/dev/null | sort -V | tail -n1)"
-          if [ -n "$BUILD_TOOLS" ] && [ -x "$BUILD_TOOLS/aapt2" ]; then
-            "$BUILD_TOOLS/aapt2" dump badging "$APK" | head -n 12
-          fi
-          sha256sum "$APK" | tee -a "$GITHUB_STEP_SUMMARY"
+          sha256sum "$OUT" | tee -a "$GITHUB_STEP_SUMMARY"
           {
             echo "### Both Engine APK"
             echo ""
@@ -122,8 +100,16 @@ jobs:
             echo "| --- | --- |"
             echo "| Version | ${{ steps.version.outputs.name }} |"
             echo "| Commit | ${{ steps.version.outputs.sha }} |"
-            echo "| Size | $(du -h "$APK" | cut -f1) |"
+            echo "| Size | $(du -h "$OUT" | cut -f1) |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          BUILD_TOOLS="$(ls -d "${ANDROID_SDK_ROOT}/build-tools/"* 2>/dev/null | sort -V | tail -n1)"
+          if [ -n "$BUILD_TOOLS" ] && [ -x "$BUILD_TOOLS/aapt2" ]; then
+            "$BUILD_TOOLS/aapt2" dump badging "${{ steps.apk.outputs.path }}" | head -n 8
+          fi
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -139,28 +125,36 @@ jobs:
         with:
           name: build-reports
           path: |
-            **/build/reports/**
-            **/build/outputs/logs/**
+            app/build/reports/**
+            app/build/outputs/logs/**
           if-no-files-found: ignore
           retention-days: 7
 
-      # ---------------------------------------------------------------- release
       - name: Decode signing keystore
         id: keystore
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_release && secrets.KEYSTORE_BASE64 != '' }}
+        if: ${{ github.event_name != 'pull_request' }}
         shell: bash
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No signing secrets configured - release APK will be unsigned."
+            exit 0
+          fi
           echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
-          echo "SUPPLY_STORE_FILE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
-          echo "SUPPLY_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
-          echo "SUPPLY_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> "$GITHUB_ENV"
-          echo "SUPPLY_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> "$GITHUB_ENV"
+          {
+            echo "SUPPLY_STORE_FILE=$RUNNER_TEMP/release.keystore"
+            echo "SUPPLY_STORE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "SUPPLY_KEY_ALIAS=$KEY_ALIAS"
+            echo "SUPPLY_KEY_PASSWORD=$KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
           echo "signed=true" >> "$GITHUB_OUTPUT"
 
       - name: Build release APK
-        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_release) || (github.event_name == 'workflow_dispatch' && inputs.publish_release) || startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.build_release || inputs.publish_release }}
         shell: bash
         env:
           VERSION_CODE: ${{ steps.version.outputs.code }}
@@ -169,9 +163,9 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon --stacktrace assembleRelease
 
-      - name: Locate release APK
+      - name: Collect release APK
         id: release_apk
-        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_release) || (github.event_name == 'workflow_dispatch' && inputs.publish_release) || startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.build_release || inputs.publish_release }}
         shell: bash
         run: |
           APK="$(find app/build/outputs/apk/release -name '*.apk' | head -n1)"
@@ -187,10 +181,9 @@ jobs:
           cp "$APK" "$OUT"
           echo "path=$OUT" >> "$GITHUB_OUTPUT"
           ls -lh "$OUT"
-          sha256sum "$OUT" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload release APK
-        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_release) || (github.event_name == 'workflow_dispatch' && inputs.publish_release) || startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.build_release || inputs.publish_release }}
         uses: actions/upload-artifact@v4
         with:
           name: BothEngine-release-apk
@@ -199,30 +192,33 @@ jobs:
           retention-days: 30
 
       - name: Publish GitHub Release
-        if: ${{ startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish_release) }}
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.publish_release }}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [ "${{ startsWith(github.ref, 'refs/tags/v') }}" = "true" ]; then
+          if [ "${GITHUB_REF}" != "${GITHUB_REF#refs/tags/}" ]; then
             TAG="${GITHUB_REF_NAME}"
           else
             TAG="build-${{ steps.version.outputs.sha }}"
           fi
 
-          cat > notes.md <<EOF
-          Automated build of **Both Engine**.
+          {
+            echo "Automated build of **Both Engine**."
+            echo ""
+            echo "- Version: \`${{ steps.version.outputs.name }}\`"
+            echo "- Commit: \`${{ steps.version.outputs.sha }}\`"
+            echo "- Workflow run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo ""
+            echo "Install with \`adb install <file>.apk\` or sideload on Android 7.0+ (OpenGL ES 2.0)."
+          } > notes.md
 
-          - Version: \`${{ steps.version.outputs.name }}\`
-          - Commit: \`${{ steps.version.outputs.sha }}\`
-          - Built by: GitHub Actions run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          ASSETS=("${{ steps.apk.outputs.path }}")
+          if [ -n "${{ steps.release_apk.outputs.path }}" ]; then
+            ASSETS+=("${{ steps.release_apk.outputs.path }}")
+          fi
 
-          Install with \`adb install <apk>\` or sideload on an Android 7.0+ device with OpenGL ES 2.0.
-          EOF
-
-          ASSETS=("${{ steps.release_apk.outputs.path }}" "${{ steps.apk.outputs.path }}")
-
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          if gh release view "$TAG" > /dev/null 2>&1; then
             gh release upload "$TAG" "${ASSETS[@]}" --clobber
           else
             gh release create "$TAG" "${ASSETS[@]}" \

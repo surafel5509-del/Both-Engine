@@ -3,13 +3,14 @@ name: CI Build
 on:
   push:
     branches-ignore: [main, master]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -27,17 +28,23 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Point Gradle at the runner's Android SDK
-        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+        run: echo "sdk.dir=${ANDROID_SDK_ROOT}" > local.properties
 
       - name: Assemble debug APK
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon --stacktrace assembleDebug
 
-      - name: Collect compiler diagnostics
+      - name: Report lint summary
         if: always()
+        continue-on-error: true
         run: |
-          find app/build -name '*.txt' -path '*logs*' -print -exec tail -n 200 {} \; 2>/dev/null || true
+          {
+            echo "### Build summary"
+            echo ""
+            echo "- Gradle: \`$(./gradlew --version 2>/dev/null | grep '^Gradle' | head -n1)\`"
+            echo "- APK: $(du -h app/build/outputs/apk/debug/*.apk 2>/dev/null | cut -f1)"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         with:

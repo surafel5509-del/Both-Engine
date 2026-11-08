@@ -2,6 +2,10 @@ name: Debug Build
 
 on:
   workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag or SHA to build'
+        default: 'main'
   push:
     branches: [arena/d50b25a3-both-engine]
 
@@ -14,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
 
       - uses: actions/setup-java@v4
         with:

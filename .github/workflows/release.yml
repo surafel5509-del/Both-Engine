@@ -1,0 +1,121 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Prepare SDK
+        shell: bash
+        run: |
+          echo "sdk.dir=${ANDROID_SDK_ROOT}" > local.properties
+          SDKMANAGER="$(ls -d "$ANDROID_SDK_ROOT"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -n1 || true)"
+          if [ -n "$SDKMANAGER" ]; then
+            yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+            "$SDKMANAGER" "platforms;android-34" "build-tools;34.0.0" > /dev/null || true
+          fi
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          if [ "${GITHUB_REF}" != "${GITHUB_REF#refs/tags/}" ]; then
+            VERSION_NAME="${GITHUB_REF_NAME#v}"
+          else
+            VERSION_NAME="1.0.${GITHUB_RUN_NUMBER}"
+          fi
+          {
+            echo "name=$VERSION_NAME"
+            echo "code=${GITHUB_RUN_NUMBER}"
+            echo "sha=$(git rev-parse --short HEAD)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Decode signing keystore
+        id: keystore
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No KEYSTORE_BASE64 secret - the release APK will be unsigned."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          {
+            echo "SUPPLY_STORE_FILE=$RUNNER_TEMP/release.keystore"
+            echo "SUPPLY_STORE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "SUPPLY_KEY_ALIAS=$KEY_ALIAS"
+            echo "SUPPLY_KEY_PASSWORD=$KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Assemble release + debug APKs
+        shell: bash
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace assembleRelease assembleDebug
+
+      - name: Collect APKs
+        shell: bash
+        run: |
+          mkdir -p dist
+          REL="$(find app/build/outputs/apk/release -name '*.apk' | head -n1)"
+          DBG="$(find app/build/outputs/apk/debug -name '*.apk' | head -n1)"
+          if [ "${{ steps.keystore.outputs.signed }}" = "true" ]; then
+            cp "$REL" "dist/BothEngine-${{ steps.version.outputs.name }}-release-signed.apk"
+          else
+            cp "$REL" "dist/BothEngine-${{ steps.version.outputs.name }}-release-unsigned.apk"
+          fi
+          cp "$DBG" "dist/BothEngine-${{ steps.version.outputs.name }}-debug.apk"
+          sha256sum dist/*.apk | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BothEngine-apks
+          path: dist/*.apk
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "Both Engine **${{ steps.version.outputs.name }}**"
+            echo ""
+            echo "Built from \`${{ steps.version.outputs.sha }}\` by GitHub Actions."
+            echo ""
+            echo "| APK | Description |"
+            echo "| --- | --- |"
+            echo "| release | Optimised build (signed when keystore secrets exist) |"
+            echo "| debug | Debug build for testing |"
+          } > notes.md
+
+          gh release create "${GITHUB_REF_NAME}" dist/*.apk \
+            --title "Both Engine ${{ steps.version.outputs.name }}" \
+            --notes-file notes.md \
+            --verify-tag ||           gh release upload "${GITHUB_REF_NAME}" dist/*.apk --clobber
