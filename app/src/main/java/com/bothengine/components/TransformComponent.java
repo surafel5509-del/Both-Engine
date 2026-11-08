@@ -196,7 +196,10 @@ public class TransformComponent extends Component {
     // Scale methods
     
     public void scale(Vector3 scale) {
-        this.scale = this.scale.multiply(scale);
+        this.scale = new Vector3(
+                this.scale.x * scale.x,
+                this.scale.y * scale.y,
+                this.scale.z * scale.z);
         setDirty();
     }
     

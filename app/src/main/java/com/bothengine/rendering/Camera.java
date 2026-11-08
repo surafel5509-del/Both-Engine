@@ -18,7 +18,7 @@ public class Camera {
         ORTHOGRAPHIC
     }
     
-    private final CameraType type;
+    private CameraType type;
     private float fieldOfView;
     private float aspectRatio;
     private float nearPlane;
@@ -37,6 +37,10 @@ public class Camera {
     
     private boolean dirty;
     
+    public Camera() {
+        this(CameraType.PERSPECTIVE);
+    }
+
     public Camera(CameraType type) {
         this.type = type;
         this.fieldOfView = 60.0f; // degrees
@@ -232,6 +236,41 @@ public class Camera {
     /**
      * Get orthographic size
      */
+    public void setNearClipPlane(float nearPlane) {
+        setNearPlane(nearPlane);
+    }
+
+    public float getNearClipPlane() {
+        return getNearPlane();
+    }
+
+    public void setFarClipPlane(float farPlane) {
+        setFarPlane(farPlane);
+    }
+
+    public float getFarClipPlane() {
+        return getFarPlane();
+    }
+
+    /**
+     * Switch between orthographic and perspective projection.
+     */
+    public void setOrthographic(boolean orthographic) {
+        this.type = orthographic ? CameraType.ORTHOGRAPHIC : CameraType.PERSPECTIVE;
+    }
+
+    public boolean isOrthographic() {
+        return type == CameraType.ORTHOGRAPHIC;
+    }
+
+    /**
+     * Release any GPU resources held by this camera.
+     */
+    public void delete() {
+        // Cameras hold no GPU resources; kept for API symmetry with other
+        // engine objects so callers can dispose uniformly.
+    }
+
     public float getOrthographicSize() {
         return orthographicSize;
     }

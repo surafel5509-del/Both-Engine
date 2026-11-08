@@ -1,5 +1,6 @@
 package com.bothengine.scripting;
 
+import com.bothengine.core.ecs.Component;
 import com.bothengine.core.ecs.Entity;
 
 /**
@@ -140,7 +141,7 @@ public abstract class Script {
      * Get a component from the entity
      */
     @SuppressWarnings("unchecked")
-    public <T> T getComponent(Class<T> componentClass) {
+    public <T extends Component> T getComponent(Class<T> componentClass) {
         if (entity != null) {
             return entity.getComponent(componentClass);
         }
@@ -150,14 +151,14 @@ public abstract class Script {
     /**
      * Check if the entity has a component
      */
-    public boolean hasComponent(Class<?> componentClass) {
+    public boolean hasComponent(Class<? extends Component> componentClass) {
         return entity != null && entity.hasComponent(componentClass);
     }
     
     /**
      * Add a component to the entity
      */
-    public <T> T addComponent(T component) {
+    public <T extends Component> T addComponent(T component) {
         if (entity != null) {
             return entity.addComponent(component);
         }
@@ -167,7 +168,7 @@ public abstract class Script {
     /**
      * Remove a component from the entity
      */
-    public <T> T removeComponent(Class<T> componentClass) {
+    public <T extends Component> T removeComponent(Class<T> componentClass) {
         if (entity != null) {
             return entity.removeComponent(componentClass);
         }
@@ -179,7 +180,7 @@ public abstract class Script {
      */
     public Entity findEntity(String name) {
         if (entity != null && entity.getEntityManager() != null) {
-            return entity.getEntityManager().findEntity(name);
+            return entity.getEntityManager().findEntityByName(name);
         }
         return null;
     }

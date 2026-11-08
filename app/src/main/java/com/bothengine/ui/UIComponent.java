@@ -14,7 +14,7 @@ public abstract class UIComponent extends Component {
     protected int renderOrder;
     protected RectTransform rectTransform;
     /** Engine-level canvas that owns this component (may be null). */
-    protected Canvas uiCanvas;
+    protected com.bothengine.ui.Canvas uiCanvas;
     protected Entity entity;
 
     public UIComponent() {
@@ -104,11 +104,11 @@ public abstract class UIComponent extends Component {
         this.rectTransform = rectTransform;
     }
 
-    public Canvas getUiCanvas() {
+    public com.bothengine.ui.Canvas getUiCanvas() {
         return uiCanvas;
     }
 
-    public void setCanvas(Canvas canvas) {
+    public void setCanvas(com.bothengine.ui.Canvas canvas) {
         this.uiCanvas = canvas;
     }
 

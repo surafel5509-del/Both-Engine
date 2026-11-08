@@ -18,6 +18,7 @@ public class Entity {
     private Entity parent;
     private int layer;
     private int zIndex;
+    private EntityManager entityManager;
     
     public Entity(String name) {
         this.id = UUID.randomUUID().toString();
@@ -34,6 +35,14 @@ public class Entity {
         this("Entity");
     }
     
+    public EntityManager getEntityManager() {
+        return entityManager;
+    }
+
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
     public String getId() {
         return id;
     }

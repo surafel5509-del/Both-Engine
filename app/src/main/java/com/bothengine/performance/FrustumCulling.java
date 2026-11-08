@@ -108,7 +108,8 @@ public class FrustumCulling {
         int visibleCount = 0;
         
         for (Object obj : objects) {
-            Bounds bounds = boundsGetter.getBounds(obj);
+            @SuppressWarnings("unchecked")
+            Bounds bounds = ((BoundsGetter<Object>) boundsGetter).getBounds(obj);
             if (isVisible(bounds)) {
                 visibleCount++;
             }

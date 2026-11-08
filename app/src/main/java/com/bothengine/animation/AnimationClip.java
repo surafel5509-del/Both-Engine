@@ -212,10 +212,9 @@ public class AnimationClip {
     /**
      * Generic keyframe sampling with linear interpolation
      */
-    @SuppressWarnings("unchecked")
-    private <T extends Keyframe> T sampleKeyframes(Keyframe[] keyframes, float time) {
+    private <T> T sampleKeyframes(Keyframe<T>[] keyframes, float time) {
         if (keyframes.length == 1) {
-            return (T) keyframes[0];
+            return keyframes[0].value;
         }
         
         // Clamp time
@@ -232,12 +231,12 @@ public class AnimationClip {
         
         // If time is beyond last keyframe, return last keyframe
         if (index >= keyframes.length - 1) {
-            return (T) keyframes[keyframes.length - 1];
+            return keyframes[keyframes.length - 1].value;
         }
         
         // Linear interpolation
         float t = (time - keyframes[index].time) / (keyframes[index + 1].time - keyframes[index].time);
-        return (T) keyframes[index].interpolate(keyframes[index + 1], t);
+        return keyframes[index].interpolate(keyframes[index + 1], t);
     }
     
     /**

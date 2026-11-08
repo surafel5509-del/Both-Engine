@@ -102,6 +102,15 @@ public class NetworkIdentity {
     }
     
     /**
+     * Force all synced transform state to be considered dirty.
+     */
+    public void setDirty() {
+        this.dirtyPosition = true;
+        this.dirtyRotation = true;
+        this.dirtyScale = true;
+    }
+
+    /**
      * Check for dirty flags
      */
     private void checkDirtyFlags() {

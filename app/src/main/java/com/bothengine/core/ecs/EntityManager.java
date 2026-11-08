@@ -34,6 +34,7 @@ public class EntityManager {
      */
     public Entity createEntity(String name) {
         Entity entity = new Entity(name);
+        entity.setEntityManager(this);
         entitiesToAdd.add(entity);
         entityMap.put(entity.getId(), entity);
         Log.d(TAG, "Created entity: " + entity.getName() + " (" + entity.getId() + ")");
@@ -86,6 +87,10 @@ public class EntityManager {
     /**
      * Get all entities
      */
+    public List<Entity> getAllEntities() {
+        return getEntities();
+    }
+
     public List<Entity> getEntities() {
         return new ArrayList<>(entities);
     }

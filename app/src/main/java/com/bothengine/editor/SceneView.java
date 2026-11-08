@@ -294,7 +294,7 @@ public class SceneView extends EditorWindow {
      */
     private void renderTransformGizmos() {
         // Get current tool
-        EditorTool tool = getEditorManager() != null ? getEditorManager().getCurrentTool() : null;
+        int tool = getEditorManager() != null ? getEditorManager().getCurrentTool() : EditorTool.SELECT;
         
         if (tool == null) return;
         

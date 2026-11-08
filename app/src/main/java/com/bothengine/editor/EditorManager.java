@@ -28,7 +28,7 @@ public class EditorManager {
     
     private List<EditorWindow> windows;
     private EditorWindow focusedWindow;
-    private EditorTool currentTool;
+    private int currentTool;
     
     private boolean isPlaying;
     private boolean isPaused;
@@ -64,7 +64,7 @@ public class EditorManager {
     public void initialize(Engine engine) {
         this.engine = engine;
         this.sceneManager = engine.getSceneManager();
-        this.entityManager = engine.getEntityManager();
+        this.entityManager = engine.getSceneManager().getEntityManager();
         
         // Create default editor camera
         this.editorCamera = new EditorCamera();
@@ -163,7 +163,7 @@ public class EditorManager {
     /**
      * Set the current tool
      */
-    public void setCurrentTool(EditorTool tool) {
+    public void setCurrentTool(int tool) {
         if (currentTool != null) {
             currentTool.onDisable();
         }
@@ -266,7 +266,7 @@ public class EditorManager {
      */
     public void clearSelection() {
         for (EditorWindow window : windows) {
-            window.onSelectionChanged(null);
+            window.onSelectionChanged((Entity) null);
         }
     }
     
@@ -325,6 +325,13 @@ public class EditorManager {
     
     // Getters and setters
     
+    /**
+     * Input state used by the editor windows (may be null before initialize()).
+     */
+    public com.bothengine.input.InputManager getInput() {
+        return engine != null ? engine.getInputManager() : null;
+    }
+
     public Engine getEngine() {
         return engine;
     }
@@ -345,7 +352,7 @@ public class EditorManager {
         return focusedWindow;
     }
     
-    public EditorTool getCurrentTool() {
+    public int getCurrentTool() {
         return currentTool;
     }
     

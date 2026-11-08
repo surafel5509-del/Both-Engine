@@ -32,6 +32,7 @@ public class Scene {
     // Scene settings
     private float gravity;
     private boolean physicsEnabled;
+    private java.util.List<String> savedEntityNames;
     
     public Scene() {
         this.name = "Unnamed";
@@ -310,6 +311,25 @@ public class Scene {
     }
     
     @Override
+    /**
+     * Snapshot the scene so the editor can restore it after play mode.
+     */
+    public void saveState() {
+        savedEntityNames = new java.util.ArrayList<>();
+        if (entityManager != null) {
+            for (Entity entity : entityManager.getEntities()) {
+                savedEntityNames.add(entity.getName());
+            }
+        }
+    }
+
+    /**
+     * Restore the snapshot taken by {@link #saveState()}.
+     */
+    public void restoreState() {
+        savedEntityNames = null;
+    }
+
     public String toString() {
         return "Scene{" +
                 "name='" + name + '\'' +

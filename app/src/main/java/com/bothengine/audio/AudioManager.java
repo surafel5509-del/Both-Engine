@@ -190,7 +190,8 @@ public class AudioManager {
         if (mediaPlayer == null) return null;
         
         mediaPlayer.setLooping(loop);
-        mediaPlayer.setVolume(masterVolume * musicVolume);
+        float musicGain = masterVolume * musicVolume;
+        mediaPlayer.setVolume(musicGain, musicGain);
         
         AudioSource source = new AudioSource(name, mediaPlayer, AudioSourceType.MUSIC);
         source.setLoop(loop);

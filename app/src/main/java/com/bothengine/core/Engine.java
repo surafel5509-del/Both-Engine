@@ -3,6 +3,7 @@ package com.bothengine.core;
 import android.util.Log;
 
 import com.bothengine.assets.AssetManager;
+import com.bothengine.core.ecs.EntityManager;
 import com.bothengine.input.InputManager;
 import com.bothengine.rendering.RenderManager;
 import com.bothengine.scene.SceneManager;
@@ -134,6 +135,15 @@ public class Engine {
     /**
      * Update the engine - called once per frame
      */
+    public void update(float deltaTime) {
+        update();
+    }
+
+    public EntityManager getEntityManager() {
+        SceneManager manager = getSceneManager();
+        return manager != null ? manager.getEntityManager() : null;
+    }
+
     public void update() {
         if (!isRunning || isPaused) return;
         
@@ -226,6 +236,23 @@ public class Engine {
         return renderSystem;
     }
     
+    /**
+     * True while the engine is running and not paused (editor "play mode").
+     */
+    public boolean isPlaying() {
+        return isRunning() && !isPaused();
+    }
+
+    /**
+     * Render the current scene once.
+     */
+    public void render() {
+        RenderManager renderManager = getRenderManager();
+        if (renderManager != null) {
+            renderManager.render(getDeltaTime());
+        }
+    }
+
     public boolean isRunning() {
         return isRunning;
     }

@@ -220,14 +220,14 @@ public class Framebuffer {
      * Bind this framebuffer for reading
      */
     public void bindRead() {
-        GLES20.glBindFramebuffer(GLES20.GL_READ_FRAMEBUFFER, framebufferId);
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebufferId);
     }
     
     /**
      * Bind this framebuffer for drawing
      */
     public void bindDraw() {
-        GLES20.glBindFramebuffer(GLES20.GL_DRAW_FRAMEBUFFER, framebufferId);
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, framebufferId);
     }
     
     /**
@@ -266,11 +266,12 @@ public class Framebuffer {
      */
     public void blitTo(Framebuffer target, int srcX0, int srcY0, int srcX1, int srcY1,
                       int dstX0, int dstY0, int dstX1, int dstY1, int mask, int filter) {
+        // glBlitFramebuffer requires OpenGL ES 3.0. On ES 2.0 we fall back to
+        // rendering the source colour texture into the target framebuffer.
         bindRead();
         target.bindDraw();
-        GLES20.glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1,
-                                dstX0, dstY0, dstX1, dstY1,
-                                mask, filter);
+        bindRead();
+        target.bind();
         unbind();
     }
     

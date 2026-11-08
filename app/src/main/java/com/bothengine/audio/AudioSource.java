@@ -11,7 +11,9 @@ import com.bothengine.rendering.Vector3;
  * Similar to Unity's AudioSource
  */
 public class AudioSource extends Component {
+    private String name;
     private String clipName;
+    private int soundId;
     private AudioClip audioClip;
     private int streamId;
     private MediaPlayer mediaPlayer;
@@ -36,6 +38,21 @@ public class AudioSource extends Component {
     private boolean isPlaying;
     private float time;
     
+    public AudioSource(String name, int streamId, int soundId, AudioManager.AudioSourceType type) {
+        this();
+        this.name = name;
+        this.streamId = streamId;
+        this.soundId = soundId;
+        this.type = type;
+    }
+
+    public AudioSource(String name, MediaPlayer mediaPlayer, AudioManager.AudioSourceType type) {
+        this();
+        this.name = name;
+        this.mediaPlayer = mediaPlayer;
+        this.type = type;
+    }
+
     public AudioSource() {
         this.clipName = "";
         this.audioClip = null;
@@ -160,7 +177,7 @@ public class AudioSource extends Component {
         if (type == AudioManager.AudioSourceType.MUSIC) {
             mediaPlayer = audioManager.playMusic(clipName, loop);
             if (mediaPlayer != null) {
-                mediaPlayer.setVolume(volume);
+                mediaPlayer.setVolume(volume, volume);
                 mediaPlayer.setLooping(loop);
             }
         } else {

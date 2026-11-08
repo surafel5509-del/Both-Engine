@@ -99,7 +99,13 @@ public class Image extends UIComponent {
         if (matrix != null) {
             canvas.drawBitmap(bitmap, matrix, this.paint);
         } else if (destRect != null) {
-            canvas.drawBitmap(bitmap, sourceRect, destRect, this.paint);
+            android.graphics.Rect src = new android.graphics.Rect(
+                    Math.round(sourceRect.left), Math.round(sourceRect.top),
+                    Math.round(sourceRect.right), Math.round(sourceRect.bottom));
+            android.graphics.Rect dst = new android.graphics.Rect(
+                    Math.round(destRect.left), Math.round(destRect.top),
+                    Math.round(destRect.right), Math.round(destRect.bottom));
+            canvas.drawBitmap(bitmap, src, dst, this.paint);
         } else {
             canvas.drawBitmap(bitmap, bounds.left, bounds.top, this.paint);
         }
