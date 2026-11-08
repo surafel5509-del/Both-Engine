@@ -157,10 +157,21 @@ fi
 
 annotate notice "Frames" "Total frames rendered: $FRAMES"
 
+DISPLAYED="$(grep -m1 "Displayed $PKG" "$LOGCAT_FILE" 2>/dev/null | tr -d '\r')"
+SURFACE="$(grep -m1 "Surface created" "$LOGCAT_FILE" 2>/dev/null | tr -d '\r')"
+if [ -z "$DISPLAYED" ]; then
+  annotate error "Not-displayed" "Activity never reported as displayed (no visible window)"
+  exit 1
+fi
+if [ -z "$SURFACE" ]; then
+  annotate error "No-surface" "GL surface was never created"
+  exit 1
+fi
+
 if [ "$FRAMES" -le 0 ]; then
   annotate error "No-frames" "Process is alive but rendered 0 frames (no surface)"
   exit 1
 fi
 
-annotate notice "Smoke test" "App is running (pid $PID) and rendered $FRAMES frames"
+annotate notice "Smoke test" "PASS: displayed on screen, GL surface created, $FRAMES frames rendered, pid $PID alive"
 exit 0
