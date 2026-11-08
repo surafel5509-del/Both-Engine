@@ -71,7 +71,10 @@ jobs:
             # and would otherwise be evicted from the ring buffer.
             (adb logcat -v threadtime > logcat.txt 2>&1 &) || true
             sleep 2
-            adb shell am start -W -n com.bothengine.game/.GameActivity > am-start.txt 2>&1 || true
+            adb shell am start -W -n com.bothengine.game/com.bothengine.GameActivity > am-start.txt 2>&1 || true
+            if grep -q "Error" am-start.txt; then
+              adb shell monkey -p com.bothengine.game -c android.intent.category.LAUNCHER 1 >> am-start.txt 2>&1 || true
+            fi
             cat am-start.txt >> smoke.env
             sleep 15
             echo "PID=$(adb shell pidof com.bothengine.game | tr -d '\r')" >> smoke.env
