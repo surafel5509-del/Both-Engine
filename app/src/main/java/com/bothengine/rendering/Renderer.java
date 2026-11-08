@@ -24,6 +24,7 @@ public class Renderer implements GLSurfaceView.Renderer {
     private float fixedDeltaTime = 1.0f / 60.0f;
     private float accumulator;
     private boolean gameRunning = true;
+    private int framesRendered;
     
     public Renderer(EngineConfig config) {
         this.config = config;
@@ -38,7 +39,7 @@ public class Renderer implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         try {
-            Log.i(TAG, "Surface created");
+            Log.i(TAG, "Surface created (GL thread alive)");
             
             // Initialize OpenGL
             GLES20Helper.initialize(gl);
@@ -111,6 +112,11 @@ public class Renderer implements GLSurfaceView.Renderer {
             // Variable update and render
             if (engine != null) {
                 engine.update();
+            }
+
+            framesRendered++;
+            if (framesRendered == 1 || framesRendered % 300 == 0) {
+                Log.i(TAG, "Rendering frame " + framesRendered);
             }
         } catch (Exception e) {
             Log.e(TAG, "Error in onDrawFrame: " + e.getMessage(), e);

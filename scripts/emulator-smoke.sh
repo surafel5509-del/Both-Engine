@@ -64,6 +64,10 @@ adb shell pm list packages 2>/dev/null | grep -q "$PKG" || {
 }
 
 # ---------------------------------------------------------------- launch
+# A locked/blank device never creates a surface, so wake and unlock first.
+adb shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1 || true
+adb shell wm dismiss-keyguard >/dev/null 2>&1 || true
+
 adb logcat -c 2>/dev/null || true
 adb logcat -v threadtime > "$LOGCAT_FILE" 2>&1 &
 LOGCAT_PID=$!
@@ -85,6 +89,11 @@ kill "$LOGCAT_PID" 2>/dev/null || true
 wait "$LOGCAT_PID" 2>/dev/null || true
 
 adb shell dumpsys activity activities > "$OUT_DIR/activities.txt" 2>/dev/null || true
+adb shell dumpsys gfxinfo "$PKG" > "$OUT_DIR/gfxinfo.txt" 2>/dev/null || true
+FRAMES="$(grep -E "Total frames rendered" "$OUT_DIR/gfxinfo.txt" 2>/dev/null | head -n1 | tr -d '\r' | sed 's/.*rendered:[[:space:]]*//')"
+case "$FRAMES" in ''|*[!0-9]*) FRAMES=0 ;; esac
+note_env "FRAMES=$FRAMES"
+note_env "FOCUS=$(adb shell dumpsys window 2>/dev/null | grep -m1 mCurrentFocus | tr -d '\r')"
 
 # ---------------------------------------------------------------- verdict
 CRASH="$(sed -n '/FATAL EXCEPTION/,/^$/p' "$LOGCAT_FILE" 2>/dev/null | head -n 60)"
@@ -125,6 +134,9 @@ else
     while IFS= read -r line; do annotate notice "App-log" "$line"; done
 fi
 
+FOCUS_LINE="$(grep -m1 "mCurrentFocus" "$OUT_DIR/../smoke.env" 2>/dev/null)"
+[ -n "$FOCUS_LINE" ] && annotate notice "Focus" "$FOCUS_LINE"
+
 STATE="$(grep -E "mResumedActivity|topResumedActivity" "$OUT_DIR/activities.txt" 2>/dev/null | head -n 2)"
 if [ -n "$STATE" ]; then
   echo "$STATE" | while IFS= read -r line; do annotate notice "Activity-state" "$line"; done
@@ -137,5 +149,10 @@ if [ -n "$CRASH_FILE" ]; then
   exit 1
 fi
 
-annotate notice "Smoke test" "App launched and is running (pid $PID)"
+if [ "$FRAMES" -le 0 ]; then
+  annotate error "No-frames" "Process is alive but rendered 0 frames (no surface)"
+  exit 1
+fi
+
+annotate notice "Smoke test" "App is running (pid $PID) and rendered $FRAMES frames"
 exit 0
