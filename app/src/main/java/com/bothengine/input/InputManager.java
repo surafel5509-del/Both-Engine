@@ -6,6 +6,8 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.bothengine.core.EngineConfig;
+import com.bothengine.rendering.Vector2;
+import com.bothengine.rendering.Vector3;
 
 import java.util.ArrayList;
 import java.util.HashMap;

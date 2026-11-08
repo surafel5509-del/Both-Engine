@@ -1,5 +1,7 @@
 package com.bothengine.rendering;
 
+import com.bothengine.components.Quaternion;
+
 /**
  * Matrix4
  * 4x4 matrix for 3D transformations
@@ -22,7 +24,7 @@ public class Matrix4 {
     /**
      * Create an identity matrix
      */
-    public static Matrix4 identity() {
+    public static Matrix4 createIdentity() {
         Matrix4 matrix = new Matrix4();
         matrix.identity();
         return matrix;
@@ -41,7 +43,7 @@ public class Matrix4 {
     /**
      * Create a translation matrix
      */
-    public static Matrix4 translate(Vector3 vector) {
+    public static Matrix4 createTranslation(Vector3 vector) {
         Matrix4 matrix = new Matrix4();
         matrix.translate(vector);
         return matrix;
@@ -64,7 +66,7 @@ public class Matrix4 {
     /**
      * Create a rotation matrix around X axis
      */
-    public static Matrix4 rotateX(float angle) {
+    public static Matrix4 createRotationX(float angle) {
         Matrix4 matrix = new Matrix4();
         matrix.rotateX(angle);
         return matrix;
@@ -94,7 +96,7 @@ public class Matrix4 {
     /**
      * Create a rotation matrix around Y axis
      */
-    public static Matrix4 rotateY(float angle) {
+    public static Matrix4 createRotationY(float angle) {
         Matrix4 matrix = new Matrix4();
         matrix.rotateY(angle);
         return matrix;
@@ -124,7 +126,7 @@ public class Matrix4 {
     /**
      * Create a rotation matrix around Z axis
      */
-    public static Matrix4 rotateZ(float angle) {
+    public static Matrix4 createRotationZ(float angle) {
         Matrix4 matrix = new Matrix4();
         matrix.rotateZ(angle);
         return matrix;
@@ -154,7 +156,7 @@ public class Matrix4 {
     /**
      * Create a scale matrix
      */
-    public static Matrix4 scale(Vector3 vector) {
+    public static Matrix4 createScale(Vector3 vector) {
         Matrix4 matrix = new Matrix4();
         matrix.scale(vector);
         return matrix;
@@ -261,6 +263,39 @@ public class Matrix4 {
     /**
      * Multiply two matrices
      */
+    /**
+     * Return a new matrix that is the inverse of the given matrix.
+     */
+    public static Matrix4 inverse(Matrix4 matrix) {
+        return matrix.invert();
+    }
+
+    /**
+     * Multiply this matrix by a rotation described by a quaternion.
+     */
+    public void rotate(Quaternion quaternion) {
+        if (quaternion == null) return;
+        float x = quaternion.x, y = quaternion.y, z = quaternion.z, w = quaternion.w;
+        float xx = x * x, yy = y * y, zz = z * z;
+        float xy = x * y, xz = x * z, yz = y * z;
+        float wx = w * x, wy = w * y, wz = w * z;
+
+        float[] rot = new float[SIZE];
+        rot[0]  = 1 - 2 * (yy + zz);
+        rot[1]  = 2 * (xy + wz);
+        rot[2]  = 2 * (xz - wy);
+        rot[4]  = 2 * (xy - wz);
+        rot[5]  = 1 - 2 * (xx + zz);
+        rot[6]  = 2 * (yz + wx);
+        rot[8]  = 2 * (xz + wy);
+        rot[9]  = 2 * (yz - wx);
+        rot[10] = 1 - 2 * (xx + yy);
+        rot[15] = 1;
+
+        Matrix4 rotationMatrix = new Matrix4(rot);
+        multiply(rotationMatrix);
+    }
+
     public static Matrix4 multiply(Matrix4 a, Matrix4 b) {
         Matrix4 result = new Matrix4();
         

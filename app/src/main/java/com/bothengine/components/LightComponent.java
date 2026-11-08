@@ -47,7 +47,7 @@ public class LightComponent extends Component {
     public static LightComponent createSpot(Vector3 position, Vector3 direction, Color color,
                                             float intensity, float innerAngle, float outerAngle) {
         LightComponent component = new LightComponent(
-                Light.createSpot("Light", position, direction, color, innerAngle, outerAngle));
+                Light.createSpot("Light", position, direction, color, 10f, innerAngle, outerAngle));
         component.setIntensity(intensity);
         return component;
     }

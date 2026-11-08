@@ -11,7 +11,7 @@ import java.util.UUID;
  */
 public class Entity {
     private final String id;
-    private final String name;
+    private String name;
     private final Map<Class<? extends Component>, Component> components;
     private boolean active;
     private boolean visible;

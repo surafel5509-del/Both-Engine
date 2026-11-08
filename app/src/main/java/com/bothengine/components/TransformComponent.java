@@ -56,7 +56,7 @@ public class TransformComponent extends Component {
     private void updateMatrix() {
         if (!dirty) return;
         
-        worldMatrix = Matrix4.identity();
+        worldMatrix = Matrix4.createIdentity();
         worldMatrix.translate(position);
         worldMatrix.rotate(rotation);
         worldMatrix.scale(scale);

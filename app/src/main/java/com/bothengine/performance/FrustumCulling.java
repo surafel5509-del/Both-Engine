@@ -24,7 +24,7 @@ public class FrustumCulling {
     public FrustumCulling() {
         this.frustum = null;
         this.camera = null;
-        this.viewProjectionMatrix = Matrix4.identity();
+        this.viewProjectionMatrix = Matrix4.createIdentity();
         this.enabled = true;
     }
     

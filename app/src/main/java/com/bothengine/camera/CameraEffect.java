@@ -10,11 +10,11 @@ import com.bothengine.rendering.Vector3;
  * Can be applied to cameras to create various visual effects
  */
 public class CameraEffect {
-    private String name;
-    private Camera camera;
-    private boolean enabled;
-    private float duration;
-    private float timer;
+    protected String name;
+    protected Camera camera;
+    protected boolean enabled;
+    protected float duration;
+    protected float timer;
     
     public CameraEffect(String name) {
         this.name = name;

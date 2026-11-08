@@ -1,5 +1,7 @@
 package com.bothengine.rendering;
 
+import com.bothengine.components.Quaternion;
+
 import android.util.Log;
 
 /**
@@ -7,6 +9,8 @@ import android.util.Log;
  * Represents a camera in 3D space for rendering
  */
 public class Camera {
+    private String name = "Camera";
+    private Quaternion rotation = Quaternion.identity();
     private static final String TAG = "Camera";
     
     public enum CameraType {
@@ -312,7 +316,7 @@ public class Camera {
      * Rotate camera around X axis
      */
     public void rotateX(float angle) {
-        Matrix4 rotation = Matrix4.rotateX(angle);
+        Matrix4 rotation = Matrix4.createRotationX(angle);
         forward = Matrix4.transform(rotation, forward);
         up = Matrix4.transform(rotation, up);
         forward.normalize();
@@ -326,7 +330,7 @@ public class Camera {
      * Rotate camera around Y axis
      */
     public void rotateY(float angle) {
-        Matrix4 rotation = Matrix4.rotateY(angle);
+        Matrix4 rotation = Matrix4.createRotationY(angle);
         forward = Matrix4.transform(rotation, forward);
         right = Matrix4.transform(rotation, right);
         forward.normalize();
@@ -340,7 +344,7 @@ public class Camera {
      * Rotate camera around Z axis
      */
     public void rotateZ(float angle) {
-        Matrix4 rotation = Matrix4.rotateZ(angle);
+        Matrix4 rotation = Matrix4.createRotationZ(angle);
         up = Matrix4.transform(rotation, up);
         right = Matrix4.transform(rotation, right);
         up.normalize();
@@ -372,6 +376,36 @@ public class Camera {
     /**
      * Get camera frustum for culling
      */
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Quaternion getRotation() {
+        return rotation;
+    }
+
+    public void setRotation(Quaternion rotation) {
+        if (rotation != null) {
+            this.rotation = rotation;
+            // Keep the look direction in sync with the new orientation.
+            Vector3 forward = rotation.getForward();
+            if (forward != null) {
+                setTarget(getPosition().add(forward));
+            }
+        }
+    }
+
+    /**
+     * Current orientation expressed as XYZ euler angles (radians).
+     */
+    public Vector3 getEulerAngles() {
+        return rotation != null ? rotation.getEulerAngles() : new Vector3();
+    }
+
     public Frustum getFrustum() {
         if (dirty) updateMatrices();
         return new Frustum(viewProjectionMatrix);

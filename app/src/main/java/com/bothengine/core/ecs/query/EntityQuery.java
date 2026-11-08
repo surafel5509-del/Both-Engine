@@ -17,9 +17,9 @@ import java.util.function.Consumer;
  */
 public class EntityQuery {
     private final ArchetypeManager archetypeManager;
-    private final Class<? extends Component>[] allOf;
-    private final Class<? extends Component>[] anyOf;
-    private final Class<? extends Component>[] noneOf;
+    private Class<? extends Component>[] allOf;
+    private Class<? extends Component>[] anyOf;
+    private Class<? extends Component>[] noneOf;
     
     private List<Archetype> matchingArchetypes;
     private boolean cacheValid;

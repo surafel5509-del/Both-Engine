@@ -139,9 +139,7 @@ public class ProgressBar extends UIComponent {
 
     public void setValue(float value) {
         this.value = Math.max(minValue, Math.min(maxValue, value));
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getNormalizedValue() {
@@ -159,9 +157,7 @@ public class ProgressBar extends UIComponent {
     public void setMinValue(float minValue) {
         this.minValue = minValue;
         setValue(value);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getMaxValue() {
@@ -171,9 +167,7 @@ public class ProgressBar extends UIComponent {
     public void setMaxValue(float maxValue) {
         this.maxValue = maxValue;
         setValue(value);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public Direction getDirection() {
@@ -182,9 +176,7 @@ public class ProgressBar extends UIComponent {
 
     public void setDirection(Direction direction) {
         this.direction = direction;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getBackgroundColor() {
@@ -194,9 +186,7 @@ public class ProgressBar extends UIComponent {
     public void setBackgroundColor(int backgroundColor) {
         this.backgroundColor = backgroundColor;
         backgroundPaint.setColor(backgroundColor);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getProgressColor() {
@@ -206,9 +196,7 @@ public class ProgressBar extends UIComponent {
     public void setProgressColor(int progressColor) {
         this.progressColor = progressColor;
         progressPaint.setColor(progressColor);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getBorderColor() {
@@ -218,9 +206,7 @@ public class ProgressBar extends UIComponent {
     public void setBorderColor(int borderColor) {
         this.borderColor = borderColor;
         borderPaint.setColor(borderColor);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getBorderWidth() {
@@ -230,9 +216,7 @@ public class ProgressBar extends UIComponent {
     public void setBorderWidth(float borderWidth) {
         this.borderWidth = borderWidth;
         borderPaint.setStrokeWidth(borderWidth);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getCornerRadius() {
@@ -241,9 +225,7 @@ public class ProgressBar extends UIComponent {
 
     public void setCornerRadius(float cornerRadius) {
         this.cornerRadius = cornerRadius;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public boolean isShowText() {
@@ -252,9 +234,7 @@ public class ProgressBar extends UIComponent {
 
     public void setShowText(boolean showText) {
         this.showText = showText;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public String getTextFormat() {
@@ -263,9 +243,7 @@ public class ProgressBar extends UIComponent {
 
     public void setTextFormat(String textFormat) {
         this.textFormat = textFormat;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getTextColor() {
@@ -275,9 +253,7 @@ public class ProgressBar extends UIComponent {
     public void setTextColor(int textColor) {
         this.textColor = textColor;
         textPaint.setColor(textColor);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getTextSize() {
@@ -287,8 +263,6 @@ public class ProgressBar extends UIComponent {
     public void setTextSize(float textSize) {
         this.textSize = textSize;
         textPaint.setTextSize(textSize);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 }

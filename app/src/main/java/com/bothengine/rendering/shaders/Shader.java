@@ -190,7 +190,7 @@ public abstract class Shader {
     /**
      * Set a uniform mat4
      */
-    public void setUniform(String name, float[] matrix) {
+    public void setUniformMatrix(String name, float[] matrix) {
         int location = getUniformLocation(name);
         if (location != -1) {
             android.opengl.GLES20.glUniformMatrix4fv(location, 1, false, matrix, 0);

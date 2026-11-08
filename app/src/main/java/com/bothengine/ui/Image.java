@@ -44,8 +44,8 @@ public class Image extends UIComponent {
     private ColorFilter colorFilter;
     
     private Paint paint;
-    private RectF sourceRect;
-    private RectF destRect;
+    private Rect sourceRect;
+    private Rect destRect;
     private boolean preserveAspectRatio;
 
     public Image() {
@@ -162,8 +162,8 @@ public class Image extends UIComponent {
             float viewWidth = bounds.width();
             float viewHeight = bounds.height();
             
-            sourceRect = new RectF(0, 0, bitmapWidth, bitmapHeight);
-            destRect = new RectF(bounds);
+            sourceRect = new Rect(0, 0, bitmapWidth, bitmapHeight);
+            destRect = new Rect(bounds);
             
             if (preserveAspectRatio) {
                 float bitmapAspect = bitmapWidth / bitmapHeight;
@@ -249,9 +249,7 @@ public class Image extends UIComponent {
     public void setSize(float width, float height) {
         super.setSize(width, height);
         updateRects();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public Bitmap getBitmap() {
@@ -262,9 +260,7 @@ public class Image extends UIComponent {
         this.bitmap = bitmap;
         this.drawable = null;
         updateRects();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public Drawable getDrawable() {
@@ -274,9 +270,7 @@ public class Image extends UIComponent {
     public void setDrawable(Drawable drawable) {
         this.drawable = drawable;
         this.bitmap = null;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public ScaleType getScaleType() {
@@ -286,9 +280,7 @@ public class Image extends UIComponent {
     public void setScaleType(ScaleType scaleType) {
         this.scaleType = scaleType;
         updateRects();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public ColorMode getColorMode() {
@@ -298,9 +290,7 @@ public class Image extends UIComponent {
     public void setColorMode(ColorMode colorMode) {
         this.colorMode = colorMode;
         updatePaint();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getColor() {
@@ -310,9 +300,7 @@ public class Image extends UIComponent {
     public void setColor(int color) {
         this.color = color;
         updatePaint();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getAlpha() {
@@ -322,9 +310,7 @@ public class Image extends UIComponent {
     public void setAlpha(float alpha) {
         this.alpha = Math.max(0, Math.min(1, alpha));
         updatePaint();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public Matrix getMatrix() {
@@ -333,9 +319,7 @@ public class Image extends UIComponent {
 
     public void setMatrix(Matrix matrix) {
         this.matrix = matrix;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public Shader getShader() {
@@ -345,9 +329,7 @@ public class Image extends UIComponent {
     public void setShader(Shader shader) {
         this.shader = shader;
         updatePaint();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public ColorFilter getColorFilter() {
@@ -357,9 +339,7 @@ public class Image extends UIComponent {
     public void setColorFilter(ColorFilter colorFilter) {
         this.colorFilter = colorFilter;
         updatePaint();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public boolean isPreserveAspectRatio() {
@@ -369,8 +349,6 @@ public class Image extends UIComponent {
     public void setPreserveAspectRatio(boolean preserveAspectRatio) {
         this.preserveAspectRatio = preserveAspectRatio;
         updateRects();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 }

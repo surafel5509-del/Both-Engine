@@ -115,9 +115,7 @@ public class Toggle extends UIComponent {
                 transitionProgress = target;
             }
             
-            if (canvas != null) {
-                canvas.markDirty();
-            }
+            notifyChanged();
         }
     }
 
@@ -138,9 +136,7 @@ public class Toggle extends UIComponent {
                 onValueChangedListener.onValueChanged(this, isOn);
             }
             
-            if (canvas != null) {
-                canvas.markDirty();
-            }
+            notifyChanged();
         }
     }
 
@@ -157,9 +153,7 @@ public class Toggle extends UIComponent {
                 onValueChangedListener.onValueChanged(this, isOn);
             }
             
-            if (canvas != null) {
-                canvas.markDirty();
-            }
+            notifyChanged();
         }
     }
 
@@ -173,9 +167,7 @@ public class Toggle extends UIComponent {
 
     public void setTextOn(String textOn) {
         this.textOn = textOn;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public String getTextOff() {
@@ -184,9 +176,7 @@ public class Toggle extends UIComponent {
 
     public void setTextOff(String textOff) {
         this.textOff = textOff;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getTextColor() {
@@ -196,9 +186,7 @@ public class Toggle extends UIComponent {
     public void setTextColor(int textColor) {
         this.textColor = textColor;
         textPaint.setColor(textColor);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getTextSize() {
@@ -208,9 +196,7 @@ public class Toggle extends UIComponent {
     public void setTextSize(float textSize) {
         this.textSize = textSize;
         textPaint.setTextSize(textSize);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getBackgroundColor() {
@@ -219,9 +205,7 @@ public class Toggle extends UIComponent {
 
     public void setBackgroundColor(int backgroundColor) {
         this.backgroundColor = backgroundColor;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getThumbColor() {
@@ -230,9 +214,7 @@ public class Toggle extends UIComponent {
 
     public void setThumbColor(int thumbColor) {
         this.thumbColor = thumbColor;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getOnColor() {
@@ -241,9 +223,7 @@ public class Toggle extends UIComponent {
 
     public void setOnColor(int onColor) {
         this.onColor = onColor;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getOffColor() {
@@ -252,9 +232,7 @@ public class Toggle extends UIComponent {
 
     public void setOffColor(int offColor) {
         this.offColor = offColor;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getThumbSize() {
@@ -263,9 +241,7 @@ public class Toggle extends UIComponent {
 
     public void setThumbSize(float thumbSize) {
         this.thumbSize = thumbSize;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getTransitionDuration() {

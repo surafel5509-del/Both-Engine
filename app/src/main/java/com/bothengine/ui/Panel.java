@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 
 import java.util.ArrayList;
@@ -56,7 +57,7 @@ public class Panel extends UIComponent {
         }
     }
 
-    private void drawBackground(Canvas canvas, Rect bounds) {
+    protected void drawBackground(Canvas canvas, Rect bounds) {
         if (backgroundDrawable != null) {
             backgroundDrawable.setBounds(bounds);
             backgroundDrawable.draw(canvas);
@@ -73,7 +74,7 @@ public class Panel extends UIComponent {
         }
     }
 
-    private void drawBorder(Canvas canvas, Rect bounds) {
+    protected void drawBorder(Canvas canvas, Rect bounds) {
         if (borderWidth <= 0) return;
         
         borderPaint.setColor(borderColor);
@@ -105,17 +106,13 @@ public class Panel extends UIComponent {
     public void addChild(UIComponent child) {
         children.add(child);
         child.getRectTransform().setParent(getRectTransform());
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public void removeChild(UIComponent child) {
         children.remove(child);
         child.getRectTransform().setParent(null);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public void clearChildren() {
@@ -123,9 +120,7 @@ public class Panel extends UIComponent {
             child.getRectTransform().setParent(null);
         }
         children.clear();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public List<UIComponent> getChildren() {
@@ -150,9 +145,7 @@ public class Panel extends UIComponent {
 
     public void setBackgroundColor(int backgroundColor) {
         this.backgroundColor = backgroundColor;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public Drawable getBackgroundDrawable() {
@@ -161,9 +154,7 @@ public class Panel extends UIComponent {
 
     public void setBackgroundDrawable(Drawable backgroundDrawable) {
         this.backgroundDrawable = backgroundDrawable;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getBorderColor() {
@@ -172,9 +163,7 @@ public class Panel extends UIComponent {
 
     public void setBorderColor(int borderColor) {
         this.borderColor = borderColor;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getBorderWidth() {
@@ -183,9 +172,7 @@ public class Panel extends UIComponent {
 
     public void setBorderWidth(float borderWidth) {
         this.borderWidth = borderWidth;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getCornerRadius() {
@@ -194,9 +181,7 @@ public class Panel extends UIComponent {
 
     public void setCornerRadius(float cornerRadius) {
         this.cornerRadius = cornerRadius;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     @Override

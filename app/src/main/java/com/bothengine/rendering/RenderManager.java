@@ -4,6 +4,7 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
 
+import com.bothengine.core.Engine;
 import com.bothengine.core.EngineConfig;
 
 import javax.microedition.khronos.egl.EGLConfig;

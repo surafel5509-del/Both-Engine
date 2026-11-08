@@ -124,6 +124,19 @@ public class Archetype {
     /**
      * Get the component type at the specified index
      */
+    /**
+     * Index of the given component type within this archetype, or -1 when absent.
+     */
+    public int getComponentTypeIndex(Class<? extends Component> componentType) {
+        Class<? extends Component>[] types = getComponentTypes();
+        for (int i = 0; i < types.length; i++) {
+            if (types[i] == componentType) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public Class<? extends Component> getComponentType(int index) {
         return componentTypes[index];
     }

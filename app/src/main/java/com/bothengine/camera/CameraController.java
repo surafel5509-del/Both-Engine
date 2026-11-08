@@ -126,7 +126,7 @@ public class CameraController {
      */
     private void updateFirstPerson(float deltaTime) {
         // Calculate rotation from euler angles
-        Quaternion rotation = Quaternion.euler(eulerAngles.x, eulerAngles.y, eulerAngles.z);
+        Quaternion rotation = Quaternion.fromEuler(eulerAngles.x, eulerAngles.y, eulerAngles.z);
         
         // Calculate forward, right, and up vectors
         Vector3 forward = rotation.getForward();

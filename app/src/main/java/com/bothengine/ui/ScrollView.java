@@ -250,9 +250,7 @@ public class ScrollView extends Panel {
         scrollX = Math.max(0, Math.min(maxScrollX, dragStartScrollX + deltaX));
         scrollY = Math.max(0, Math.min(maxScrollY, dragStartScrollY + deltaY));
         
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     @Override
@@ -268,9 +266,7 @@ public class ScrollView extends Panel {
     public void scrollTo(float x, float y) {
         scrollX = Math.max(0, Math.min(maxScrollX, x));
         scrollY = Math.max(0, Math.min(maxScrollY, y));
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public void scrollBy(float dx, float dy) {
@@ -291,9 +287,7 @@ public class ScrollView extends Panel {
 
     public void setScrollX(float scrollX) {
         this.scrollX = Math.max(0, Math.min(maxScrollX, scrollX));
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getScrollY() {
@@ -302,9 +296,7 @@ public class ScrollView extends Panel {
 
     public void setScrollY(float scrollY) {
         this.scrollY = Math.max(0, Math.min(maxScrollY, scrollY));
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getMaxScrollX() {
@@ -321,9 +313,7 @@ public class ScrollView extends Panel {
 
     public void setScrollDirection(ScrollDirection scrollDirection) {
         this.scrollDirection = scrollDirection;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public ScrollbarVisibility getScrollbarVisibility() {
@@ -332,9 +322,7 @@ public class ScrollView extends Panel {
 
     public void setScrollbarVisibility(ScrollbarVisibility scrollbarVisibility) {
         this.scrollbarVisibility = scrollbarVisibility;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getScrollbarColor() {
@@ -344,9 +332,7 @@ public class ScrollView extends Panel {
     public void setScrollbarColor(int scrollbarColor) {
         this.scrollbarColor = scrollbarColor;
         scrollbarPaint.setColor(scrollbarColor);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getScrollbarWidth() {
@@ -355,9 +341,7 @@ public class ScrollView extends Panel {
 
     public void setScrollbarWidth(float scrollbarWidth) {
         this.scrollbarWidth = scrollbarWidth;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getScrollbarBackgroundColor() {
@@ -367,9 +351,7 @@ public class ScrollView extends Panel {
     public void setScrollbarBackgroundColor(int scrollbarBackgroundColor) {
         this.scrollbarBackgroundColor = scrollbarBackgroundColor;
         scrollbarBackgroundPaint.setColor(scrollbarBackgroundColor);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public Drawable getScrollbarDrawable() {
@@ -378,9 +360,7 @@ public class ScrollView extends Panel {
 
     public void setScrollbarDrawable(Drawable scrollbarDrawable) {
         this.scrollbarDrawable = scrollbarDrawable;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public Drawable getScrollbarBackgroundDrawable() {
@@ -389,9 +369,7 @@ public class ScrollView extends Panel {
 
     public void setScrollbarBackgroundDrawable(Drawable scrollbarBackgroundDrawable) {
         this.scrollbarBackgroundDrawable = scrollbarBackgroundDrawable;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getScrollSensitivity() {

@@ -90,9 +90,7 @@ public class Button extends UIComponent {
     public void onPointerDown(float x, float y, int pointerId) {
         if (isDisabled) return;
         isPressed = true;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     @Override
@@ -124,17 +122,13 @@ public class Button extends UIComponent {
             }
         }
         isPressed = false;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     @Override
     public void onPointerCancel() {
         isPressed = false;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public String getText() {
@@ -143,9 +137,7 @@ public class Button extends UIComponent {
 
     public void setText(String text) {
         this.text = text;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getTextColor() {
@@ -155,9 +147,7 @@ public class Button extends UIComponent {
     public void setTextColor(int textColor) {
         this.textColor = textColor;
         textPaint.setColor(textColor);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getTextSize() {
@@ -167,9 +157,7 @@ public class Button extends UIComponent {
     public void setTextSize(float textSize) {
         this.textSize = textSize;
         textPaint.setTextSize(textSize);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getBackgroundColor() {
@@ -178,9 +166,7 @@ public class Button extends UIComponent {
 
     public void setBackgroundColor(int backgroundColor) {
         this.backgroundColor = backgroundColor;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getPressedColor() {
@@ -205,9 +191,7 @@ public class Button extends UIComponent {
 
     public void setBackgroundDrawable(Drawable backgroundDrawable) {
         this.backgroundDrawable = backgroundDrawable;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public Drawable getPressedDrawable() {
@@ -248,9 +232,7 @@ public class Button extends UIComponent {
 
     public void setDisabled(boolean disabled) {
         isDisabled = disabled;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public void setEnabled(boolean enabled) {

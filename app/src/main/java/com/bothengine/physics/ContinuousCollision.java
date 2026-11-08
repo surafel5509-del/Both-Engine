@@ -2,6 +2,7 @@ package com.bothengine.physics;
 
 import com.bothengine.core.ecs.Entity;
 import com.bothengine.rendering.Vector3;
+import com.bothengine.systems.PhysicsSystem;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -318,7 +318,7 @@ public class NetworkManager {
         connections.put(connection.getConnectionId(), connection);
         
         // Fire connection event
-        fireEvent(new NetworkEvent(NetworkEventType.CLIENT_CONNECTED, connection.getConnectionId()));
+        fireEvent(new NetworkEvent(NetworkEvent.NetworkEventType.CLIENT_CONNECTED, connection.getConnectionId()));
     }
     
     /**
@@ -329,7 +329,7 @@ public class NetworkManager {
         
         if (connection != null) {
             // Fire disconnection event
-            fireEvent(new NetworkEvent(NetworkEventType.CLIENT_DISCONNECTED, connectionId));
+            fireEvent(new NetworkEvent(NetworkEvent.NetworkEventType.CLIENT_DISCONNECTED, connectionId));
         }
     }
     

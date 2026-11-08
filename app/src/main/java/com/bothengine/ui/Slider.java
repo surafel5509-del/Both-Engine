@@ -155,9 +155,7 @@ public class Slider extends UIComponent {
             if (onValueChangedListener != null) {
                 onValueChangedListener.onValueChanged(this, value);
             }
-            if (canvas != null) {
-                canvas.markDirty();
-            }
+            notifyChanged();
         }
     }
 
@@ -167,9 +165,7 @@ public class Slider extends UIComponent {
 
     public void setValue(float value) {
         this.value = Math.max(minValue, Math.min(maxValue, value));
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getNormalizedValue() {
@@ -187,9 +183,7 @@ public class Slider extends UIComponent {
     public void setMinValue(float minValue) {
         this.minValue = minValue;
         setValue(value);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getMaxValue() {
@@ -199,9 +193,7 @@ public class Slider extends UIComponent {
     public void setMaxValue(float maxValue) {
         this.maxValue = maxValue;
         setValue(value);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public Direction getDirection() {
@@ -210,9 +202,7 @@ public class Slider extends UIComponent {
 
     public void setDirection(Direction direction) {
         this.direction = direction;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getTrackColor() {
@@ -222,9 +212,7 @@ public class Slider extends UIComponent {
     public void setTrackColor(int trackColor) {
         this.trackColor = trackColor;
         trackPaint.setColor(trackColor);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getProgressColor() {
@@ -234,9 +222,7 @@ public class Slider extends UIComponent {
     public void setProgressColor(int progressColor) {
         this.progressColor = progressColor;
         progressPaint.setColor(progressColor);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getThumbColor() {
@@ -246,9 +232,7 @@ public class Slider extends UIComponent {
     public void setThumbColor(int thumbColor) {
         this.thumbColor = thumbColor;
         thumbPaint.setColor(thumbColor);
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getThumbSize() {
@@ -257,9 +241,7 @@ public class Slider extends UIComponent {
 
     public void setThumbSize(float thumbSize) {
         this.thumbSize = thumbSize;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public OnValueChangedListener getOnValueChangedListener() {

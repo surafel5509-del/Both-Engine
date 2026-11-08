@@ -23,11 +23,13 @@ public class Bounds {
         updateCenterAndSize();
     }
     
-    public Bounds(Vector3 center, Vector3 size) {
-        this.center = new Vector3(center);
-        this.size = new Vector3(size);
-        this.min = Vector3.subtract(center, Vector3.multiply(size, 0.5f));
-        this.max = Vector3.add(center, Vector3.multiply(size, 0.5f));
+    public static Bounds fromCenterAndSize(Vector3 center, Vector3 size) {
+        Bounds bounds = new Bounds();
+        bounds.center = new Vector3(center);
+        bounds.size = new Vector3(size);
+        bounds.min = Vector3.subtract(center, Vector3.multiply(size, 0.5f));
+        bounds.max = Vector3.add(center, Vector3.multiply(size, 0.5f));
+        return bounds;
     }
     
     /**

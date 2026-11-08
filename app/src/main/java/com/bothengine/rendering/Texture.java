@@ -83,6 +83,12 @@ public class Texture {
         this();
         this.name = name;
     }
+
+    public Texture(String name, int width, int height) {
+        this(name);
+        this.width = width;
+        this.height = height;
+    }
     
     /**
      * Load texture from assets

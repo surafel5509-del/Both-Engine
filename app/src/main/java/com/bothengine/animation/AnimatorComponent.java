@@ -112,10 +112,11 @@ public class AnimatorComponent extends Component {
         Vector3 scale = clip.sampleScale("root", currentTime);
         
         // If in transition, blend with next state
+        float blendFactor = 0f;
         if (controller.isInTransition() && nextState != null) {
             AnimationClip nextClip = nextState.getClip();
             float nextTime = nextState.getTime();
-            float blendFactor = controller.getTransitionProgress();
+            blendFactor = controller.getTransitionProgress();
             
             Vector3 nextPosition = nextClip.samplePosition("root", nextTime);
             Quaternion nextRotation = nextClip.sampleRotation("root", nextTime);

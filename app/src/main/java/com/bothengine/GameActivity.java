@@ -10,6 +10,7 @@ import android.view.WindowManager;
 import com.bothengine.core.Engine;
 import com.bothengine.core.EngineConfig;
 import com.bothengine.core.EngineApplication;
+import com.bothengine.rendering.RenderManager;
 
 
 

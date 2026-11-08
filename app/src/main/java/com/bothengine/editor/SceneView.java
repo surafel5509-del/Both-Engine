@@ -208,7 +208,7 @@ public class SceneView extends EditorWindow {
         // Matrix4 currentMatrix = getCurrentMatrix();
         
         // Scale grid to match grid size
-        Matrix4 scaleMatrix = Matrix4.identity();
+        Matrix4 scaleMatrix = Matrix4.createIdentity();
         scaleMatrix.scale(new Vector3(gridSize, 1f, gridSize));
         
         // Set grid color
@@ -223,7 +223,7 @@ public class SceneView extends EditorWindow {
             // Set shader color to gridSubdivisionColor
             
             // Scale down for subdivisions
-            Matrix4 subScaleMatrix = Matrix4.identity();
+            Matrix4 subScaleMatrix = Matrix4.createIdentity();
             subScaleMatrix.scale(new Vector3(gridSize / gridSubdivisions, 1f, gridSize / gridSubdivisions));
             
             // Render subdivision grid

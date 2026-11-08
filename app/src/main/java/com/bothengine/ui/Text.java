@@ -185,9 +185,7 @@ public class Text extends UIComponent {
     public void setText(String text) {
         this.text = text;
         updateTextLayout();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getColor() {
@@ -196,9 +194,7 @@ public class Text extends UIComponent {
 
     public void setColor(int color) {
         this.color = color;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getFontSize() {
@@ -208,9 +204,7 @@ public class Text extends UIComponent {
     public void setFontSize(float fontSize) {
         this.fontSize = fontSize;
         updateTextLayout();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public Typeface getTypeface() {
@@ -220,9 +214,7 @@ public class Text extends UIComponent {
     public void setTypeface(Typeface typeface) {
         this.typeface = typeface;
         updateTextLayout();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public TextAlignment getAlignment() {
@@ -232,9 +224,7 @@ public class Text extends UIComponent {
     public void setAlignment(TextAlignment alignment) {
         this.alignment = alignment;
         updateTextLayout();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public TextOverflow getOverflow() {
@@ -244,9 +234,7 @@ public class Text extends UIComponent {
     public void setOverflow(TextOverflow overflow) {
         this.overflow = overflow;
         updateTextLayout();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public int getMaxLines() {
@@ -256,9 +244,7 @@ public class Text extends UIComponent {
     public void setMaxLines(int maxLines) {
         this.maxLines = maxLines;
         updateTextLayout();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getLineSpacing() {
@@ -268,9 +254,7 @@ public class Text extends UIComponent {
     public void setLineSpacing(float lineSpacing) {
         this.lineSpacing = lineSpacing;
         updateTextLayout();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public boolean isBold() {
@@ -280,9 +264,7 @@ public class Text extends UIComponent {
     public void setBold(boolean bold) {
         this.bold = bold;
         updateTextLayout();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public boolean isItalic() {
@@ -292,9 +274,7 @@ public class Text extends UIComponent {
     public void setItalic(boolean italic) {
         this.italic = italic;
         updateTextLayout();
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public boolean isUnderline() {
@@ -303,9 +283,7 @@ public class Text extends UIComponent {
 
     public void setUnderline(boolean underline) {
         this.underline = underline;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public boolean isStrikethrough() {
@@ -314,9 +292,7 @@ public class Text extends UIComponent {
 
     public void setStrikethrough(boolean strikethrough) {
         this.strikethrough = strikethrough;
-        if (canvas != null) {
-            canvas.markDirty();
-        }
+        notifyChanged();
     }
 
     public float getTextWidth() {
