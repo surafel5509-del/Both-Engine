@@ -92,7 +92,11 @@ jobs:
           CACHED="$(find "${HOME}/.gradle/wrapper/dists" -mindepth 4 -maxdepth 5 -name 'gradle-8.6' -type d 2>/dev/null | head -n1)"
           if [ -n "$CACHED" ]; then
             GRADLE_CMD="$CACHED/bin/gradle"
-          elif command -v gradle >/dev/null 2>&1; then
+          elif command -v gradle >/dev/null 2>&1 &&
+               gradle --version 2>/dev/null | grep -qE '^Gradle 8\.6$'; then
+            # Only trust a PATH gradle when it matches the wrapper version:
+            # Gradle 9 removed DependencyHandler.module(Object), which this
+            # build uses.
             GRADLE_CMD="gradle"
           else
             for attempt in 1 2 3 4 5; do
