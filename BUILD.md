@@ -343,6 +343,51 @@ To see all dependencies:
 ./gradlew dependencies
 ```
 
+## Runtime Smoke Test (emulator)
+
+A build that compiles is not proof that it runs. `.github/workflows/emulator-smoke-test.yml`
+boots an Android 11 emulator, installs **both** the debug and the release APK and
+launches each one, then requires all of the following before it will pass:
+
+| Check | Why |
+| --- | --- |
+| Process alive 15 s after launch | catches crashes and early exits |
+| Activity reported `Displayed` | proves a window actually appeared |
+| GL surface created + continuous frames | proves the render loop is running |
+| App's own framebuffer readback | catches a black screen that still "renders" |
+| No crash / native fault / ANR / render error in logcat | catches silent failures |
+
+The framebuffer check is the important one: `Renderer` clears to black, so a
+process that renders 600 frames per second can still be showing nothing at all.
+`SceneRenderer` therefore reads its own output back with `glReadPixels`, logs
+`SceneCheck warm=<n>% ...`, and the test fails when that is close to zero.
+
+The logic lives in [`scripts/emulator-smoke.sh`](scripts/emulator-smoke.sh), with
+the PNG statistics helper in [`scripts/screenshot_colours.py`](scripts/screenshot_colours.py).
+Run the checker on any screenshot with:
+
+```bash
+python3 scripts/screenshot_colours.py screenshot.png
+```
+
+## What the app shows
+
+On launch the app draws a built-in default scene — a gradient background with a
+lit, rotating cube — plus a small build label in the top-left corner reading, for
+example, `Both Engine 1.0.66 · rendering`. That label is the quickest way to
+confirm on a real device which build is installed and that rendering is live.
+
+## Diagnosing a crash on a real device
+
+Uncaught exceptions are logged under the `EngineApplication` tag and written to
+the app's private storage as `files/last_crash.txt`. With the device connected:
+
+```bash
+adb logcat -s EngineApplication GameActivity Renderer SceneRenderer
+adb shell run-as com.bothengine.game cat files/last_crash.txt
+```
+
+---
 ## License
 
 This project uses various open-source libraries. See [LICENSE](LICENSE) for details.
