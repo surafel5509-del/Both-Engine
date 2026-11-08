@@ -196,12 +196,13 @@ test_apk() {
     return 1
   fi
 
-  local scene_check scene_rows
-  scene_check="$(grep -m1 "SceneCheck" "$logcat" 2>/dev/null | tr -d '\r')"
+  local scene_check scene_stats scene_rows
+  scene_stats="$(grep -m1 "SceneCheck warm=" "$logcat" 2>/dev/null | sed 's/.*SceneCheck //' | tr -d '\r')"
+  scene_check="$(grep -m1 "SceneCheck PASS\|SceneCheck FAIL" "$logcat" 2>/dev/null | tr -d '\r')"
   scene_rows="$(grep "SceneRow " "$logcat" 2>/dev/null | sed 's/.*SceneRow //' | head -n 14)"
-  note_env "SCENECHECK[$label]=$scene_check"
+  note_env "SCENECHECK[$label]=$scene_stats / $scene_check"
 
-  if [ -z "$scene_check" ]; then
+  if [ -z "$scene_stats" ]; then
     annotate error "No-selfcheck-$label" "The app never reported a framebuffer self-check"
     summary "FAIL: no framebuffer readback was logged."
     return 1
@@ -211,13 +212,13 @@ test_apk() {
   summary '```'
   printf '%s\n' "$scene_rows" | sed 's/^/    /' >> "$SUMMARY"
   summary '```'
-  annotate notice "SceneCheck-$label" "$(printf '%s' "$scene_check" | sed 's/.*SceneCheck //')"
+  annotate notice "SceneCheck-$label" "$scene_stats"
   if [ -n "$scene_rows" ]; then
     annotate notice "SceneRows-$label" "$(printf '%s' "$scene_rows" | tr -d '\n' | tr -d '|')"
   fi
 
-  if ! printf '%s' "$scene_check" | grep -q "SceneCheck PASS"; then
-    annotate error "Scene-blank-$label" "$scene_check"
+  if ! printf '%s' "$scene_check" | grep -q "PASS"; then
+    annotate error "Scene-blank-$label" "${scene_stats:-no verdict logged}"
     summary "FAIL: the app reports nothing but background on screen."
     return 1
   fi
