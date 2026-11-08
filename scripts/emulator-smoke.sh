@@ -126,11 +126,11 @@ fi
 # Match our own log tags and the activity record: a bare "Engine" substring
 # collides with unrelated system apps (e.g. BugleRcsEngine).
 APP_LOG="$(grep -E "(GameActivity|EngineApplication|RenderManager|Renderer|FallbackRenderer):|Displayed $PKG" \
-  "$LOGCAT_FILE" 2>/dev/null | head -n 12)"
+  "$LOGCAT_FILE" 2>/dev/null | tail -n 12)"
 if [ -n "$APP_LOG" ]; then
   echo "$APP_LOG" | while IFS= read -r line; do annotate notice "App-log" "$line"; done
 else
-  grep -F "$PKG" "$LOGCAT_FILE" 2>/dev/null | head -n 8 |
+  grep -F "$PKG" "$LOGCAT_FILE" 2>/dev/null | tail -n 8 |
     while IFS= read -r line; do annotate notice "App-log" "$line"; done
 fi
 
@@ -148,6 +148,14 @@ if [ -n "$CRASH_FILE" ]; then
   echo "$CRASH_FILE" | head -n 20 | while IFS= read -r line; do annotate error "Stored-crash" "$line"; done
   exit 1
 fi
+
+RENDER_ERRORS="$(grep -E "Error in (onDrawFrame|onSurfaceCreated|onSurfaceChanged)" "$LOGCAT_FILE" 2>/dev/null | head -n 6)"
+if [ -n "$RENDER_ERRORS" ]; then
+  echo "$RENDER_ERRORS" | while IFS= read -r line; do annotate error "Render-error" "$line"; done
+  exit 1
+fi
+
+annotate notice "Frames" "Total frames rendered: $FRAMES"
 
 if [ "$FRAMES" -le 0 ]; then
   annotate error "No-frames" "Process is alive but rendered 0 frames (no surface)"
