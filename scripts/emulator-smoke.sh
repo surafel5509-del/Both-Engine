@@ -196,6 +196,32 @@ test_apk() {
     return 1
   fi
 
+  local scene_check scene_rows
+  scene_check="$(grep -m1 "SceneCheck" "$logcat" 2>/dev/null | tr -d '\r')"
+  scene_rows="$(grep "SceneRow " "$logcat" 2>/dev/null | sed 's/.*SceneRow //' | head -n 14)"
+  note_env "SCENECHECK[$label]=$scene_check"
+
+  if [ -z "$scene_check" ]; then
+    annotate error "No-selfcheck-$label" "The app never reported a framebuffer self-check"
+    summary "FAIL: no framebuffer readback was logged."
+    return 1
+  fi
+
+  summary "App framebuffer readback:"
+  summary '```'
+  printf '%s\n' "$scene_rows" | sed 's/^/    /' >> "$SUMMARY"
+  summary '```'
+  annotate notice "SceneCheck-$label" "$(printf '%s' "$scene_check" | sed 's/.*SceneCheck //')"
+  if [ -n "$scene_rows" ]; then
+    annotate notice "SceneRows-$label" "$(printf '%s' "$scene_rows" | tr -d '\n' | tr -d '|')"
+  fi
+
+  if ! printf '%s' "$scene_check" | grep -q "SceneCheck PASS"; then
+    annotate error "Scene-blank-$label" "$scene_check"
+    summary "FAIL: the app reports nothing but background on screen."
+    return 1
+  fi
+
   local displayed surface
   displayed="$(grep -m1 "Displayed $PKG" "$logcat" 2>/dev/null | tr -d '\r')"
   surface="$(grep -m1 "Surface created" "$logcat" 2>/dev/null | tr -d '\r')"

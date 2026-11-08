@@ -72,6 +72,8 @@ public class SceneRenderer {
     private float angleDegrees;
     private float secondsRendered;
     private boolean ready;
+    private int frameIndex;
+    private boolean selfCheckDone;
 
     /** True once the shaders compiled and the geometry uploaded. */
     public boolean isReady() {
@@ -167,6 +169,106 @@ public class SceneRenderer {
         GLES20.glDisableVertexAttribArray(aPosition);
         GLES20.glDisableVertexAttribArray(aNormal);
         GLES20.glUseProgram(0);
+
+        frameIndex++;
+        // Once the scene has settled, read the framebuffer back and log what is
+        // actually on screen. This is the app proving its own output rather
+        // than a screenshot of the whole device (which includes system bars).
+        if (!selfCheckDone && frameIndex >= 30) {
+            selfCheckDone = true;
+            runSelfCheck(width, height);
+        }
+    }
+
+    /**
+     * Read the framebuffer back and log colour statistics plus an ASCII preview.
+     * Must run on the GL thread.
+     */
+    private void runSelfCheck(int width, int height) {
+        int w = Math.min(width, 480);
+        int h = Math.min(height, 480);
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+
+        try {
+            ByteBuffer pixels = ByteBuffer.allocateDirect(w * h * 4).order(ByteOrder.nativeOrder());
+            GLES20.glReadPixels(0, 0, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, pixels);
+            int error = GLES20.glGetError();
+            if (error != GLES20.GL_NO_ERROR) {
+                Log.w(TAG, "glReadPixels failed with GL error " + error);
+                return;
+            }
+            pixels.rewind();
+
+            int total = 0;
+            int warm = 0;
+            int nonBlack = 0;
+            int luminanceSum = 0;
+            int distinct = 0;
+            byte[] seen = new byte[1 << 15];
+
+            int cols = 40;
+            int rowsCount = 12;
+            long[] cellLum = new long[cols * rowsCount];
+            long[] cellCount = new long[cols * rowsCount];
+
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
+                    int i = (y * w + x) * 4;
+                    int r = pixels.get(i) & 0xFF;
+                    int g = pixels.get(i + 1) & 0xFF;
+                    int b = pixels.get(i + 2) & 0xFF;
+                    total++;
+                    int lum = (r * 299 + g * 587 + b * 114) / 1000;
+                    luminanceSum += lum;
+                    if (r + g + b > 36) {
+                        nonBlack++;
+                    }
+                    if (r > 90 && r > g + 15 && g >= b) {
+                        warm++;
+                    }
+                    int key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+                    if (seen[key] == 0) {
+                        seen[key] = 1;
+                        distinct++;
+                    }
+                    int cx = x * cols / w;
+                    int cy = y * rowsCount / h;
+                    // glReadPixels is bottom-up; flip so the preview reads upright.
+                    int cell = (rowsCount - 1 - cy) * cols + cx;
+                    cellLum[cell] += lum;
+                    cellCount[cell]++;
+                }
+            }
+
+            if (total == 0) {
+                return;
+            }
+
+            int warmPct = 100 * warm / total;
+            int brightPct = 100 * nonBlack / total;
+            Log.i(TAG, "SceneCheck warm=" + warmPct + "% bright=" + brightPct
+                + "% colours=" + distinct + " avg=" + (luminanceSum / total) + " size=" + w + "x" + h);
+
+            String gradient = " .:-=+*#%@";
+            for (int row = 0; row < rowsCount; row++) {
+                StringBuilder line = new StringBuilder("SceneRow ");
+                for (int col = 0; col < cols; col++) {
+                    int cell = row * cols + col;
+                    long avg = cellCount[cell] == 0 ? 0 : cellLum[cell] / cellCount[cell];
+                    int idx = (int) (avg * (gradient.length() - 1) / 255);
+                    line.append(gradient.charAt(Math.max(0, Math.min(gradient.length() - 1, idx))));
+                }
+                Log.i(TAG, line.toString());
+            }
+
+            Log.i(TAG, warmPct >= 2
+                ? "SceneCheck PASS: geometry is visible on screen"
+                : "SceneCheck FAIL: nothing but background is drawn");
+        } catch (Throwable t) {
+            Log.w(TAG, "Self check could not run: " + t.getMessage(), t);
+        }
     }
 
     /** Release GL resources. Safe to call more than once. */
