@@ -114,7 +114,28 @@ if [ -z "$PID" ]; then
 fi
 
 # Healthy: report proof so the run page shows the app really started.
-grep -E "Displayed $PKG|GameActivity|EngineApplication|Engine:" "$LOGCAT_FILE" 2>/dev/null | head -n 10 |
-  while IFS= read -r line; do annotate notice App-log "$line"; done
+# Match our own log tags and the activity record: a bare "Engine" substring
+# collides with unrelated system apps (e.g. BugleRcsEngine).
+APP_LOG="$(grep -E "(GameActivity|EngineApplication|RenderManager|Renderer|FallbackRenderer):|Displayed $PKG" \
+  "$LOGCAT_FILE" 2>/dev/null | head -n 12)"
+if [ -n "$APP_LOG" ]; then
+  echo "$APP_LOG" | while IFS= read -r line; do annotate notice "App-log" "$line"; done
+else
+  grep -F "$PKG" "$LOGCAT_FILE" 2>/dev/null | head -n 8 |
+    while IFS= read -r line; do annotate notice "App-log" "$line"; done
+fi
+
+STATE="$(grep -E "mResumedActivity|topResumedActivity" "$OUT_DIR/activities.txt" 2>/dev/null | head -n 2)"
+if [ -n "$STATE" ]; then
+  echo "$STATE" | while IFS= read -r line; do annotate notice "Activity-state" "$line"; done
+fi
+
+# A stored crash report means the process died earlier and came back.
+CRASH_FILE="$(adb shell run-as "$PKG" cat files/last_crash.txt 2>/dev/null | tr -d '\r')"
+if [ -n "$CRASH_FILE" ]; then
+  echo "$CRASH_FILE" | head -n 20 | while IFS= read -r line; do annotate error "Stored-crash" "$line"; done
+  exit 1
+fi
+
 annotate notice "Smoke test" "App launched and is running (pid $PID)"
 exit 0
